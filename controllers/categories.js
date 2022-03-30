@@ -1,14 +1,54 @@
 import streamifier from "streamifier";
 import categoryModel from "../models/categoryModel.js";
+import subCategoryModel from "../models/subCategoryModel.js";
 
-import cloudinarySDK from "cloudinary";
-const cloudinary = cloudinarySDK.v2;
-//config cloudinary with url
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+import cloudinary from "../config/cloudinaryConfig.js";
+
+export async function getAllCategories(req, res) {
+  try {
+    const allCategories = await categoryModel
+      .find({})
+      .sort({ categoryName: 1 });
+    res.send(allCategories);
+  } catch (err) {
+    console.log(err);
+  }
+}
+
+export async function getCategory(req, res) {
+  try {
+    const category = await categoryModel
+      .findById(req.params.categoryId)
+      .sort({ categoryName: -1 });
+    res.send(category);
+  } catch (err) {
+    console.log(err);
+  }
+}
+export async function getCategoryWithName(req, res) {
+  try {
+    const category = await categoryModel
+      .findOne({
+        categoryName: { $regex: req.params.categoryName, $options: "i" },
+      })
+      .sort({ categoryName: -1 });
+    res.send(category);
+  } catch (err) {
+    console.log(err);
+  }
+}
+export async function getCategoryWithSlug(req, res) {
+  try {
+    const category = await categoryModel
+      .findOne({
+        slug: req.params.categorySlug,
+      }).populate('offers')
+      .sort({ categorySlug: -1 });
+    res.send(category);
+  } catch (err) {
+    console.log(err);
+  }
+}
 
 export async function createCategory(req, res) {
   try {
@@ -17,9 +57,11 @@ export async function createCategory(req, res) {
     // return res.status(200).json({
     //   message: "Category created successfully",
     // });
-    //check if title already exists
-    const titleExists = await categoryModel.findOne({ title: req.body.title });
-    if (titleExists) {
+    //check if category already exists
+    const categoryExists = await categoryModel.findOne({
+      categoryName: req.body.categoryName,
+    });
+    if (categoryExists) {
       return res.status(409).send("Category already exists");
     } else {
       //create new category
@@ -34,7 +76,6 @@ export async function createCategory(req, res) {
               reject(error);
             }
           });
-
           streamifier.createReadStream(req.files.image.data).pipe(stream);
         });
       };
@@ -63,9 +104,9 @@ export async function createCategory(req, res) {
 
 export async function updateCategory(req, res) {
   try {
-    console.log(req.params.catagory, req.body, req.files);
+    console.log(req.params.categoryId, req.body, req.files);
     //check if image is provided
-    if (req.files.image) {
+    if (req.files && req.files.image) {
       //upload buffer to cloudinary
       let streamUpload = (req) => {
         return new Promise((resolve, reject) => {
@@ -81,39 +122,63 @@ export async function updateCategory(req, res) {
       };
       let result = await streamUpload(req);
       const updatedCategory = await categoryModel.findByIdAndUpdate(
-        req.params.catagory,
+        req.params.categoryId,
         { ...req.body, image: result.secure_url },
         { new: true }
       );
       res.json(updatedCategory);
     } else {
-      const updatedCategory = await categoryModel.findByIdAndUpdate(
-        req.params.catagory,
-        req.body,
-        { new: true }
-      );
-      res.json(updatedCategory);
+      categoryModel
+        .findByIdAndUpdate(req.params.categoryId, req.body, { new: true })
+        .then((result) => {
+          console.log(result);
+          res.json(result);
+        })
+        .catch((err) => {
+          console.log(err);
+        });
     }
   } catch (err) {
     console.log(err);
   }
 }
-
-export async function getCategory(req, res) {
+export async function getAutoCompleteData(req, res) {
   try {
+    const { searchText } = req.body;
+    const regex = new RegExp(`^${searchText}`);
+    console.log(req.body)
     //do a case insensitive search
     const category = await categoryModel
-      .findOne({ title: { $regex: `^${req.params.catagory}$`, $options: "i" } })
-      .sort({ title: -1 });
+      .find({
+        categoryName: { $regex: regex, $options: "is" },
+      })
+      .select('categoryName slug -_id')
+      // console.log(category)
     res.send(category);
   } catch (err) {
     console.log(err);
   }
 }
-export async function getAllCategories(req, res) {
+export async function getSubCategories(req, res) {
   try {
-    const allCategories = await categoryModel.find({}).sort({ title: -1 });
-    res.send(allCategories);
+    const categories = await subCategoryModel
+      .find({
+        category: req.params.categoryId,
+      })
+      .sort({ categoryName: -1 });
+    res.send(categories);
+  } catch (err) {
+    console.log(err);
+  }
+}
+
+export async function deleteCategory(req, res) {
+  try {
+    const deletedCategory = await categoryModel.findByIdAndRemove(
+      req.params.categoryId
+    );
+
+    res.json(deletedCategory);
   } catch (err) {
     console.log(err);
   }
