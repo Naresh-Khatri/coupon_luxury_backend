@@ -4,11 +4,8 @@ const CategorySchema = new mongoose.Schema({
   image: {
     type: String,
   },
-  uid: {
-    type: String,
-    required: true,
-  },
-  title: {
+
+  categoryName: {
     type: String,
     unique: true,
     required: true,
@@ -18,8 +15,9 @@ const CategorySchema = new mongoose.Schema({
     unique: true,
     required: true,
   },
+  offers: [{ type: mongoose.Schema.Types.ObjectId, ref: "Offer" }],
+  subCategories: [{ type: mongoose.Schema.Types.ObjectId, ref: "SubCategory" }],
   metaTitle: {
-
     type: String,
     // required: true,
   },
@@ -37,6 +35,10 @@ const CategorySchema = new mongoose.Schema({
   },
   pageHTML: {
     type: String,
+  },
+  uid: {
+    type: String,
+    required: true,
   },
   createdAt: {
     type: Date,
