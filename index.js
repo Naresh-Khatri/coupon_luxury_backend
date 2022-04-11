@@ -14,6 +14,7 @@ import blogRoutes from "./routes/blog.js";
 import statsRoutes from "./routes/stats.js";
 import subscriptionRoutes from "./routes/subscription.js";
 import pageRoutes from "./routes/page.js";
+import slideRoutes from "./routes/slide.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -47,6 +48,7 @@ app.use(cors(corsOptions));
 app.use("/admin", adminRoutes);
 app.use("/stats", statsRoutes);
 app.use("/blogs", blogRoutes);
+app.use("/slides", slideRoutes);
 app.use("/categories", categoryRoutes);
 app.use("/sub-categories", subCategoryRoutes);
 app.use("/stores", storeRoutes);
