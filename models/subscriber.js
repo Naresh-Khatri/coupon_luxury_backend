@@ -7,7 +7,6 @@ const SubscriberSchema = new mongoose.Schema({
   },
   phone: {
     type: String,
-    required: true,
   },
   createdAt: {
     type: Date,
