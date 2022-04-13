@@ -11,6 +11,11 @@ Router.get("/", blogController.getAllBlogs);
 
 Router.get("/:blogId", blogController.getBlog);
 
+Router.get(
+  "/getUsingSlug/:blogSlug",
+  blogController.getBlogWithSlug
+);
+
 Router.delete("/:blogId", blogController.deleteBlog);
 
 Router.patch("/:blogId", checkIfAuthenticated, blogController.updateBlog);

@@ -23,6 +23,16 @@ export async function getBlog(req, res) {
     console.log(err);
   }
 }
+export async function getBlogWithSlug(req, res) {
+  try {
+    //do a case insensitive search
+    const blog = await blogModel.findOne({ slug: req.params.blogSlug });
+    res.send(blog);
+  } catch (err) {
+    console.log(err);
+  }
+}
+
 
 export async function createBlog(req, res) {
   try {
