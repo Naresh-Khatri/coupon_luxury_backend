@@ -8,19 +8,23 @@ const StoreSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  categoryId: {
+  // categoryName: {
+  //   type: String,
+  // },
+  // subCategoryName: {
+  //   type: String,
+  // },
+  category: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Category",
   },
-  categoryName: {
-    type: String,
-  },
-  subCategoryId: {
+  subCategory: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "SubCategory",
   },
-  subCategoryName: {
+  storeURL:{
     type: String,
+    required:true
   },
   country: {
     type: String,

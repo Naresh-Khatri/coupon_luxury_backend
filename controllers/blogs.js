@@ -3,6 +3,8 @@ import blogModel from "../models/BlogModel.js";
 import storeModel from "../models/storeModel.js";
 
 import cloudinary from "../config/cloudinaryConfig.js";
+import imageKit from "../config/imagekitConfig.js";
+import { removeImgFromImageKit } from "../config/imagekitConfig.js";
 
 export async function getAllBlogs(req, res) {
   try {
@@ -15,7 +17,7 @@ export async function getAllBlogs(req, res) {
 
 export async function getBlog(req, res) {
   try {
-    console.log(req.params.blogId);
+    // console.log(req.params.blogId);
     //do a case insensitive search
     const blog = await blogModel.findById(req.params.blogModel);
     res.send(blog);
@@ -33,34 +35,27 @@ export async function getBlogWithSlug(req, res) {
   }
 }
 
-
 export async function createBlog(req, res) {
   try {
-    console.log(req.body);
-    //upload coverImg and thumbnailImg to cloudinary
-    let streamUpload = (image) => {
-      return new Promise((resolve, reject) => {
-        let stream = cloudinary.uploader.upload_stream((error, result) => {
-          if (result) {
-            resolve(result);
-          } else {
-            reject(error);
-          }
-        });
-        streamifier.createReadStream(image.data).pipe(stream);
-      });
-    };
+    // console.log(req.body);
+    //upload coverImg and thumbnailImg to imageKit
     const promises = [
-      streamUpload(req.files.coverImg),
-      streamUpload(req.files.thumbnailImg),
+      imageKit.upload({
+        file: req.files.coverImg.data,
+        fileName: req.body.slug,
+      }),
+      imageKit.upload({
+        file: req.files.thumbnailImg.data,
+        fileName: req.body.slug,
+      }),
     ];
     const results = await Promise.all(promises);
-    console.log(results);
+    // console.log(results);
     //create new blog
     const newBlog = await blogModel({
       ...req.body,
-      coverImg: results[0].secure_url,
-      thumbnailImg: results[1].secure_url,
+      coverImg: results[0].url,
+      thumbnailImg: results[1].url,
       type: req.body.blogType,
       store: req.body.blogType == "store" ? req.body.storeId : null,
       uid: req.user.uid,
@@ -104,41 +99,43 @@ export async function updateBlog(req, res) {
     console.log(req.params.blogId, req.body, req.files);
     //check if image is provided
     if (req.files && req.files.coverImg) {
-      //upload buffer to cloudinary
-      let streamUpload = (image) => {
-        return new Promise((resolve, reject) => {
-          let stream = cloudinary.uploader.upload_stream((error, result) => {
-            if (result) {
-              resolve(result);
-            } else {
-              reject(error);
-            }
-          });
-
-          streamifier.createReadStream(image.data).pipe(stream);
-        });
-      };
+      //upload coverImg and thumbnailImg to imageKit
       const promises = [
-        streamUpload(req.files.coverImg),
-        streamUpload(req.files.thumbnailImg),
+        imageKit.upload({
+          file: req.files.coverImg.data,
+          fileName: req.body.slug,
+        }),
+        imageKit.upload({
+          file: req.files.thumbnailImg.data,
+          fileName: req.body.slug,
+        }),
       ];
       const results = await Promise.all(promises);
-      console.log(results);
       //update blog
 
       const updatedBlog = await blogModel.findByIdAndUpdate(
         req.params.blogId,
         {
           ...req.body,
-          coverImg: results[0].secure_url,
-          thumbnailImg: results[1].secure_url,
+          coverImg: results[0].url,
+          thumbnailImg: results[1].url,
           type: req.body.blogType,
           store: req.body.blogType == "store" ? req.body.storeId : null,
           uid: req.user.uid,
         },
-        { new: true }
+        { new: false }
       );
-      console.log(updatedBlog);
+      //delete coverImg and thumbnailImg from imageKit
+      const oldCoverImg =
+        updatedBlog.coverImg.split("/")[
+          updatedBlog.coverImg.split("/").length - 1
+        ];
+      const oldThumbnaiImg =
+        updatedBlog.thumbnailImg.split("/")[
+          updatedBlog.thumbnailImg.split("/").length - 1
+        ];
+      removeImgFromImageKit(oldCoverImg);
+      removeImgFromImageKit(oldThumbnaiImg);
       res.json(updatedBlog);
     } else {
       //update blog
@@ -147,7 +144,6 @@ export async function updateBlog(req, res) {
         { ...req.body, uid: req.user.uid },
         { new: true }
       );
-      console.log(updatedBlog);
       res.json(updatedBlog);
     }
   } catch (err) {
@@ -172,6 +168,15 @@ export async function deleteBlog(req, res) {
         }
       );
     }
+    //delete coverImg and thumbnailImg from imageKit
+    const oldCoverImg =
+      deletedBlog.coverImg.split("/")[deletedBlog.coverImg.split("/").length - 1];
+    const oldThumbnaiImg =
+      deletedBlog.thumbnailImg.split("/")[
+        deletedBlog.thumbnailImg.split("/").length - 1
+      ];
+    removeImgFromImageKit(oldCoverImg);
+    removeImgFromImageKit(oldThumbnaiImg);
     res.json(deletedBlog);
   } catch (err) {
     console.log(err);

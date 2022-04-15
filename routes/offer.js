@@ -10,7 +10,7 @@ Router.get("/", offerController.getAllOffers);
 
 Router.get("/:offerId", offerController.getOffer);
 
-Router.delete("/:offerId", offerController.deleteOffer);
+Router.delete("/:offerId",checkIfAuthenticated, offerController.deleteOffer);
 
 Router.patch("/:offerId", checkIfAuthenticated, offerController.updateOffer);
 

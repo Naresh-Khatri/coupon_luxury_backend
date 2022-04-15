@@ -11,7 +11,7 @@ Router.get("/", subCategoryController.getAllSubCategories);
 
 Router.get("/:subCategoryId", subCategoryController.getSubCategory);
 
-Router.delete("/:subCategoryId", subCategoryController.deleteSubCategory);
+Router.delete("/:subCategoryId",checkIfAuthenticated, subCategoryController.deleteSubCategory);
 
 Router.patch(
   "/:subCategoryId",

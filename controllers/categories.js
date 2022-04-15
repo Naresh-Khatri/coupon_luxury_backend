@@ -3,6 +3,7 @@ import categoryModel from "../models/categoryModel.js";
 import subCategoryModel from "../models/subCategoryModel.js";
 
 import cloudinary from "../config/cloudinaryConfig.js";
+import imageKit from "../config/imagekitConfig.js";
 
 export async function getAllCategories(req, res) {
   try {
@@ -42,7 +43,8 @@ export async function getCategoryWithSlug(req, res) {
     const category = await categoryModel
       .findOne({
         slug: req.params.categorySlug,
-      }).populate('offers')
+      })
+      .populate("offers")
       .sort({ categorySlug: -1 });
     res.send(category);
   } catch (err) {
@@ -52,8 +54,8 @@ export async function getCategoryWithSlug(req, res) {
 
 export async function createCategory(req, res) {
   try {
-    console.log(req.body);
-    console.log(req.files);
+    // console.log(req.body);
+    // console.log(req.files);
     // return res.status(200).json({
     //   message: "Category created successfully",
     // });
@@ -67,25 +69,23 @@ export async function createCategory(req, res) {
       //create new category
 
       //upload buffer to cloudinary
-      let streamUpload = (req) => {
-        return new Promise((resolve, reject) => {
-          let stream = cloudinary.uploader.upload_stream((error, result) => {
-            if (result) {
-              resolve(result);
-            } else {
-              reject(error);
-            }
-          });
-          streamifier.createReadStream(req.files.image.data).pipe(stream);
-        });
-      };
-
-      let result = await streamUpload(req);
-      console.log(result);
+      //upload buffer to imageKit
+      const result = await imageKit.upload({
+        file: req.files.image.data,
+        fileName: req.body.slug,
+        extensions: [
+          {
+            name: "google-auto-tagging",
+            maxTags: 5,
+            minConfidence: 95,
+          },
+        ],
+      });
+      // console.log(result);
       const newCategory = await categoryModel({
         ...req.body,
         uid: req.user.uid,
-        image: result.secure_url,
+        image: result.url,
       });
       newCategory.save((err, result) => {
         if (err) {
@@ -104,34 +104,40 @@ export async function createCategory(req, res) {
 
 export async function updateCategory(req, res) {
   try {
-    console.log(req.params.categoryId, req.body, req.files);
+    // console.log(req.params.categoryId, req.body, req.files);
     //check if image is provided
     if (req.files && req.files.image) {
       //upload buffer to cloudinary
-      let streamUpload = (req) => {
-        return new Promise((resolve, reject) => {
-          let stream = cloudinary.uploader.upload_stream((error, result) => {
-            if (result) {
-              resolve(result);
-            } else {
-              reject(error);
-            }
-          });
-          streamifier.createReadStream(req.files.image.data).pipe(stream);
-        });
-      };
-      let result = await streamUpload(req);
+      //upload buffer to imageKit
+      const result = await imageKit.upload({
+        file: req.files.image.data,
+        fileName: req.body.slug,
+        extensions: [
+          {
+            name: "google-auto-tagging",
+            maxTags: 5,
+            minConfidence: 95,
+          },
+        ],
+      });
+
       const updatedCategory = await categoryModel.findByIdAndUpdate(
         req.params.categoryId,
-        { ...req.body, image: result.secure_url },
-        { new: true }
+        { ...req.body, image: result.url },
+        { new: false }
       );
+      //now remove the old image from imageKit
+      //grab the old image from the db
+      const oldImageName =
+        updatedCategory.image.split("/")[updatedCategory.image.split("/").length - 1];
+      //remove the old image from imageKit
+      await removeImgFromImageKit(oldImageName);
       res.json(updatedCategory);
     } else {
       categoryModel
         .findByIdAndUpdate(req.params.categoryId, req.body, { new: true })
         .then((result) => {
-          console.log(result);
+          // console.log(result);
           res.json(result);
         })
         .catch((err) => {
@@ -146,14 +152,13 @@ export async function getAutoCompleteData(req, res) {
   try {
     const { searchText } = req.body;
     const regex = new RegExp(`^${searchText}`);
-    console.log(req.body)
     //do a case insensitive search
     const category = await categoryModel
       .find({
         categoryName: { $regex: regex, $options: "is" },
       })
-      .select('categoryName slug -_id')
-      // console.log(category)
+      .select("categoryName slug -_id");
+    // console.log(category)
     res.send(category);
   } catch (err) {
     console.log(err);
@@ -183,3 +188,18 @@ export async function deleteCategory(req, res) {
     console.log(err);
   }
 }
+
+const removeImgFromImageKit = (imageName) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      //find the image in imageKit
+      const images = await imageKit.listFiles({ name: imageName });
+      //if there is an image, delete it
+      if (images.length>0) await imageKit.deleteFile(images[0].fileId);
+      resolve();
+    } catch (err) {
+      console.log(err);
+      reject();
+    }
+  });
+};

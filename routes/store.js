@@ -17,7 +17,7 @@ Router.get("/getUsingSlug/:storeSlug", storeController.getStoreWithSlug);
 
 Router.post("/getAutoCompleteData/", storeController.getAutoCompleteData);
 
-Router.delete("/:storeId", storeController.deleteStore);
+Router.delete("/:storeId",checkIfAuthenticated, storeController.deleteStore);
 
 Router.patch("/:storeId", checkIfAuthenticated, storeController.updateStore);
 

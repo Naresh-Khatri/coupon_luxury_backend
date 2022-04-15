@@ -21,7 +21,7 @@ Router.get(
 );
 Router.post("/getAutoCompleteData/", categoryController.getAutoCompleteData);
 
-Router.delete("/:categoryId", categoryController.deleteCategory);
+Router.delete("/:categoryId",checkIfAuthenticated, categoryController.deleteCategory);
 
 Router.patch(
   "/:categoryId",

@@ -16,7 +16,7 @@ Router.get(
   blogController.getBlogWithSlug
 );
 
-Router.delete("/:blogId", blogController.deleteBlog);
+Router.delete("/:blogId",checkIfAuthenticated, blogController.deleteBlog);
 
 Router.patch("/:blogId", checkIfAuthenticated, blogController.updateBlog);
 

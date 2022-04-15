@@ -5,9 +5,9 @@ import subCategoryModel from "../models/subCategoryModel.js";
 export async function getAllSubCategories(req, res) {
   try {
     const allCategories = await subCategoryModel
-      .find({})
+      .find({}).populate('category','categoryName slug')
       .sort({ subCategoryName: -1 });
-      console.log(allCategories)
+      console.log(allCategories[0])
     res.send(allCategories);
   } catch (err) {
     console.log(err);
@@ -16,7 +16,7 @@ export async function getAllSubCategories(req, res) {
 
 export async function getSubCategory(req, res) {
   try {
-    console.log(req.params.subCategoryId);
+    // console.log(req.params.subCategoryId);
     //do a case insensitive search
     const subCategory = await subCategoryModel
       .findById(req.params.subCategoryId)
