@@ -39,11 +39,30 @@ app.use(express.json());
 app.use(morgan("dev"));
 //cors
 const corsOptions = {
-  origin:["http://localhost:8080","http://localhost:3000",'http://localhost:9100'],
+  origin: [
+    "http://localhost:8080",
+    "http://localhost:3000",
+    "http://localhost:9100",
+    "https://cl.panipuri.tech/",
+  ],
   optionsSuccessStatus: 200,
   credentials: true,
 };
 app.use(cors(corsOptions));
+app.use(function (req, res, next) {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET, POST, OPTIONS, PUT, PATCH, DELETE"
+  );
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "X-Requested-With,content-type"
+  );
+  res.setHeader("Access-Control-Allow-Credentials", true);
+
+  next();
+});
 
 app.use("/admin", adminRoutes);
 app.use("/stats", statsRoutes);
@@ -54,8 +73,8 @@ app.use("/sub-categories", subCategoryRoutes);
 app.use("/stores", storeRoutes);
 app.use("/offers", offerRoutes);
 app.use("/blogs", blogRoutes);
-app.use('/subscriptions', subscriptionRoutes);
-app.use('/page', pageRoutes)
+app.use("/subscriptions", subscriptionRoutes);
+app.use("/page", pageRoutes);
 
 app.listen(PORT, () =>
   console.log("Server is running on http://localhost:" + PORT)
