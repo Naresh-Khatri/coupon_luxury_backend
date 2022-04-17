@@ -14,6 +14,7 @@ const getAuthToken = (req) => {
 export const checkIfAuthenticated = async (req, res, next) => {
   try {
     const authToken = getAuthToken(req);
+    // console.log(req.headers.authorization);
     if (!authToken) {
       return res.status(401).send("Unauthorized");
     }
@@ -21,7 +22,7 @@ export const checkIfAuthenticated = async (req, res, next) => {
     req.user = decodedToken;
     next();
   } catch (err) {
-    // console.error(err);
+    console.error(err);
     if(err.code === 'auth/argument-error') {
         return res.status(401).send("Unauthorized");
     }

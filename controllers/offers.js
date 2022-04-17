@@ -84,14 +84,31 @@ export async function createOffer(req, res) {
 
 export async function updateOffer(req, res) {
   try {
-    console.log(req.params.offerId, req.body, req.files);
-    //check if image is provided
-    const updatedOffer = await offerModel.findByIdAndUpdate(
+    // console.log(req.params.offerId, req.body);
+    //update the offer info
+    const offer = await offerModel.findByIdAndUpdate(
       req.params.offerId,
       req.body,
-      { new: true }
+      { new: false }
     );
-    res.json(updatedOffer);
+    // get the old store to remove offer from it
+    const oldStore = offer.store;
+    //save offer in the new store if not present
+    const newStore = await storeModel.findById(req.body.store);
+    if (!newStore.offers.includes(req.params.offerId)) {
+      // console.log("doesnt have offer, adding it");
+      newStore.offers.push(req.params.offerId);
+      await newStore.save();
+      // console.log(newStore);
+      // console.log("removing offer from old");
+      //remove the offer from old store
+      const oldOffer = await storeModel.findByIdAndUpdate(
+        oldStore,
+        { $pull: { offers: req.params.offerId } },
+        { new: true }
+      );
+    }
+    res.json(offer);
   } catch (err) {
     console.log(err);
   }
@@ -99,7 +116,6 @@ export async function updateOffer(req, res) {
 
 export async function deleteOffer(req, res) {
   try {
-
     const offerToBeDeleted = await offerModel.findById(req.params.offerId);
     //delete offer from store, category and subCategory collections
     const store = await storeModel.findById(offerToBeDeleted.store);
@@ -108,7 +124,9 @@ export async function deleteOffer(req, res) {
     const category = await categoryModel.findById(offerToBeDeleted.category);
     category.offers.pull(req.params.offerId);
     await category.save();
-    const subCategory = await subCategoryModel.findById(offerToBeDeleted.subCategory);
+    const subCategory = await subCategoryModel.findById(
+      offerToBeDeleted.subCategory
+    );
     subCategory.offers.pull(req.params.offerId);
     await subCategory.save();
 

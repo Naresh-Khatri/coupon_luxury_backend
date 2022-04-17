@@ -7,7 +7,9 @@ import * as storeController from "../controllers/stores.js";
 const Router = express.Router();
 Router.use(fileUpload());
 
-Router.get("/", storeController.getAllStores);
+Router.get("/", storeController.getPublicStores);
+
+Router.get("/all",checkIfAuthenticated, storeController.getAllStores);
 
 Router.get("/:storeId", storeController.getStore);
 

@@ -5,6 +5,7 @@ import subCategoryModel from "../models/subCategoryModel.js";
 
 import cloudinary from "../config/cloudinaryConfig.js";
 import imageKit from "../config/imagekitConfig.js";
+import { removeImgFromImageKit } from "../config/imagekitConfig.js";
 
 export async function createStore(req, res) {
   try {
@@ -60,7 +61,7 @@ export async function createStore(req, res) {
 
 export async function updateStore(req, res) {
   try {
-    console.log(req.params.storeId, req.body, req.files);
+    // console.log(req.params.storeId, req.body, req.files);
     // console.log('\n\n\n\n\n\n Heli')
     //check if image is provided
     if (req.files && req.files.image) {
@@ -76,7 +77,6 @@ export async function updateStore(req, res) {
           },
         ],
       });
-      console.log(result);
       const updatedStore = await storeModel.findByIdAndUpdate(
         req.params.storeId,
         { ...req.body, image: result.url },
@@ -90,15 +90,14 @@ export async function updateStore(req, res) {
       await removeImgFromImageKit(oldImageName);
       res.json(updatedStore);
     } else {
-      console.log("no image provided");
       const updatedStore = await storeModel.findByIdAndUpdate(
         req.params.storeId,
         req.body,
         { new: true }
       );
-      console.log(req.body.category);
-      console.log(updatedStore.category);
-      console.log("updated record", updatedStore);
+      // console.log(req.body.category);
+      // console.log(updatedStore.category);
+      // console.log("updated record", updatedStore);
       res.json(updatedStore);
     }
   } catch (err) {
@@ -179,6 +178,27 @@ export async function getAllStores(req, res) {
     console.log(err);
   }
 }
+export async function getPublicStores(req, res) {
+  let allStores = null;
+  try {
+    if (req.query.featured === "true") {
+      allStores = await storeModel
+        .find({ featured: true, active: true })
+        .populate("category", "categoryName categorySlug _id ")
+        .populate("subCategory", "subCategoryName subCategorySlug _id ")
+        .sort({ title: -1 });
+    } else {
+      allStores = await storeModel
+        .find({ active: true })
+        .populate("category", "categoryName categorySlug _id ")
+        .populate("subCategory", "subCategoryName subCategorySlug _id ")
+        .sort({ title: -1 });
+    }
+    res.send(allStores);
+  } catch (err) {
+    console.log(err);
+  }
+}
 export async function deleteStore(req, res) {
   try {
     console.log(req.body);
@@ -188,19 +208,3 @@ export async function deleteStore(req, res) {
     console.log(err);
   }
 }
-
-const removeImgFromImageKit = (imageName) => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      //find the image in imageKit
-      const images = await imageKit.listFiles({ name: imageName });
-      console.log(images);
-      //if there is an image, delete it
-      if (images) await imageKit.deleteFile(images[0].fileId);
-      resolve();
-    } catch (err) {
-      console.log(err);
-      reject();
-    }
-  });
-};

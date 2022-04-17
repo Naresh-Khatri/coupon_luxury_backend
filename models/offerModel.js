@@ -22,15 +22,6 @@ const offerSchema = new mongoose.Schema({
     ref: "Store",
     required: true,
   },
-  categoryName: {
-    type: String,
-  },
-  subCategoryName: {
-    type: String,
-  },
-  storeName: {
-    type: String,
-  },
   title: {
     type: String,
     required: true,
