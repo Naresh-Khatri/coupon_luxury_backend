@@ -15,6 +15,7 @@ import statsRoutes from "./routes/stats.js";
 import subscriptionRoutes from "./routes/subscription.js";
 import pageRoutes from "./routes/page.js";
 import slideRoutes from "./routes/slide.js";
+import bgVideoRoutes from "./routes/backgroundVideo.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -75,6 +76,7 @@ app.use("/offers", offerRoutes);
 app.use("/blogs", blogRoutes);
 app.use("/subscriptions", subscriptionRoutes);
 app.use("/page", pageRoutes);
+app.use("/bg-video", bgVideoRoutes);
 
 app.listen(PORT, () =>
   console.log("Server is running on http://localhost:" + PORT)
