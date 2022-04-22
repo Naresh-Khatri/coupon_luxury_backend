@@ -16,6 +16,18 @@ export async function getAllOffers(req, res) {
   }
 }
 
+export async function getPublicOffers(req, res) {
+  try {
+    const allOffers = await offerModel
+      .find({ active: true })
+      .populate("store", "-pageHTML -__v ")
+      .sort({ storeName: -1 });
+    res.send(allOffers);
+  } catch (err) {
+    console.log(err);
+  }
+}
+
 export async function getOffer(req, res) {
   try {
     //do a case insensitive search
@@ -24,6 +36,23 @@ export async function getOffer(req, res) {
       .populate("store", "-__v ")
       .sort({ storeName: -1 });
     res.send(offer);
+  } catch (err) {
+    console.log(err);
+  }
+}
+
+export async function getOffersWithTitle(req, res) {
+  try {
+    //do a case insensitive search
+    const offers = await offerModel
+      .find({
+        title: { $regex: `${req.params.offerTitle}`, $options: "i" },
+      })
+      .populate("store", "storeName image slug")
+      // .populate("category", "categoryName categorySlug _id ")
+      // .populate("subCategory", "subCategoryName subCategorySlug _id ")
+      // .populate("offers");
+    res.send(offers);
   } catch (err) {
     console.log(err);
   }

@@ -13,7 +13,6 @@ import offerRoutes from "./routes/offer.js";
 import blogRoutes from "./routes/blog.js";
 import statsRoutes from "./routes/stats.js";
 import subscriptionRoutes from "./routes/subscription.js";
-import pageRoutes from "./routes/page.js";
 import slideRoutes from "./routes/slide.js";
 import bgVideoRoutes from "./routes/backgroundVideo.js";
 
@@ -65,6 +64,15 @@ app.use(function (req, res, next) {
   next();
 });
 
+app.use((req, res, next) => {
+  try {
+    decodeURIComponent(req.path);
+    next();
+  } catch (err) {
+    console.log(err, req.path);
+    res.send("400 Bad Request");
+  }
+});
 app.use("/admin", adminRoutes);
 app.use("/stats", statsRoutes);
 app.use("/blogs", blogRoutes);
@@ -75,7 +83,6 @@ app.use("/stores", storeRoutes);
 app.use("/offers", offerRoutes);
 app.use("/blogs", blogRoutes);
 app.use("/subscriptions", subscriptionRoutes);
-app.use("/page", pageRoutes);
 app.use("/bg-video", bgVideoRoutes);
 
 app.listen(PORT, () =>

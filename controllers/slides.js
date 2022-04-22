@@ -93,6 +93,16 @@ export async function updateSlide(req, res) {
   }
 }
 
+export async function getPublicSlides(req, res) {
+  try {
+    //do a case insensitive search
+    const slides = await slideModel.find({active:true}).sort({ order: -1 });
+    res.send(slides);
+  } catch (err) {
+    console.log(err);
+  }
+}
+
 export async function getAllSlides(req, res) {
   try {
     //do a case insensitive search
@@ -102,6 +112,7 @@ export async function getAllSlides(req, res) {
     console.log(err);
   }
 }
+
 export async function getSlide(req, res) {
   try {
     //do a case insensitive search

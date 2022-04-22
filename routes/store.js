@@ -13,7 +13,7 @@ Router.get("/all",checkIfAuthenticated, storeController.getAllStores);
 
 Router.get("/:storeId", storeController.getStore);
 
-Router.get("/getUsingName/:storeName", storeController.getStoreWithName);
+Router.get("/getUsingName/:storeName", storeController.getStoresWithName);
 
 Router.get("/getUsingSlug/:storeSlug", storeController.getStoreWithSlug);
 

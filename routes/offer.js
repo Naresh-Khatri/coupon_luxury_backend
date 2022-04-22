@@ -6,9 +6,13 @@ import * as offerController from "../controllers/offers.js";
 
 const Router = express.Router();
 
-Router.get("/", offerController.getAllOffers);
+Router.get("/", offerController.getPublicOffers);
+
+Router.get("/all", checkIfAuthenticated, offerController.getAllOffers);
 
 Router.get("/:offerId", offerController.getOffer);
+
+Router.get("/getUsingTitle/:offerTitle", offerController.getOffersWithTitle);
 
 Router.delete("/:offerId",checkIfAuthenticated, offerController.deleteOffer);
 

@@ -7,7 +7,10 @@ import * as slideController from "../controllers/slides.js";
 const Router = express.Router();
 Router.use(fileUpload());
 
-Router.get("/", slideController.getAllSlides);
+Router.get("/", slideController.getPublicSlides);
+
+Router.get("/all", checkIfAuthenticated, slideController.getAllSlides);
+
 Router.get("/slideId", slideController.getSlide);
 
 Router.delete("/:slideId",checkIfAuthenticated, slideController.deleteSlide);

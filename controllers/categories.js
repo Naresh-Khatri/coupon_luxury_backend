@@ -5,10 +5,21 @@ import subCategoryModel from "../models/subCategoryModel.js";
 import cloudinary from "../config/cloudinaryConfig.js";
 import imageKit from "../config/imagekitConfig.js";
 
+export async function getPublicCategories(req, res) {
+  try {
+    const allCategories = await categoryModel
+      .find({ active: true })
+      .sort({ categoryName: 1 });
+    res.send(allCategories);
+  } catch (err) {
+    console.log(err);
+  }
+}
+
 export async function getAllCategories(req, res) {
   try {
     const allCategories = await categoryModel
-      .find({})
+      .find()
       .sort({ categoryName: 1 });
     res.send(allCategories);
   } catch (err) {

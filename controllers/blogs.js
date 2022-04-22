@@ -6,6 +6,15 @@ import cloudinary from "../config/cloudinaryConfig.js";
 import imageKit from "../config/imagekitConfig.js";
 import { removeImgFromImageKit } from "../config/imagekitConfig.js";
 
+export async function getPublicBlogs(req, res) {
+  try {
+    const allBlogs = await blogModel.find({active:true}).sort({ createdAt: -1 });
+    res.send(allBlogs);
+  } catch (err) {
+    console.log(err);
+  }
+}
+
 export async function getAllBlogs(req, res) {
   try {
     const allBlogs = await blogModel.find({}).sort({ createdAt: -1 });

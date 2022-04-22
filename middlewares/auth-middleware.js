@@ -23,14 +23,14 @@ export const checkIfAuthenticated = async (req, res, next) => {
     next();
   } catch (err) {
     console.error(err);
-    if(err.code === 'auth/argument-error') {
-        return res.status(401).send("Unauthorized");
-    }
-    else if(err.code === 'auth/id-token-expired') {
-        return res.status(401).send("token expired");
-    }
-    else {
-        return res.status(500).send("Internal Server Error");
+    console.error(err.code);
+    if (err.code === "auth/argument-error") {
+      console.log('You have not provided a token.');
+      return res.status(401).send({ message: "Unauthorized" });
+    } else if (err.code === "auth/id-token-expired") {
+      return res.status(401).send({ message: "token expired" });
+    } else {
+      return res.status(500).send({ message: "Internal Server Error" });
     }
   }
 };

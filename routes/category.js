@@ -7,7 +7,10 @@ import * as categoryController from "../controllers/categories.js";
 const Router = express.Router();
 Router.use(fileUpload());
 
-Router.get("/", categoryController.getAllCategories);
+Router.get("/", categoryController.getPublicCategories);
+
+Router.get("/all", checkIfAuthenticated, categoryController.getAllCategories);
+
 
 Router.get("/:categoryId", categoryController.getCategory);
 

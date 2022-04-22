@@ -118,17 +118,18 @@ export async function getStore(req, res) {
     console.log(err);
   }
 }
-export async function getStoreWithName(req, res) {
+export async function getStoresWithName(req, res) {
   try {
     //do a case insensitive search
-    const store = await storeModel
-      .findOne({
-        storeName: { $regex: `^${req.params.storeName}$`, $options: "i" },
+    const stores = await storeModel
+      .find({
+        storeName: { $regex: `^${req.params.storeName}`, $options: "i" },
       })
-      .populate("category", "categoryName categorySlug _id ")
-      .populate("subCategory", "subCategoryName subCategorySlug _id ")
-      .populate("offers");
-    res.send(store);
+      .select("storeName slug image _id")
+      // .populate("category", "categoryName categorySlug _id ")
+      // .populate("subCategory", "subCategoryName subCategorySlug _id ")
+      // .populate("offers");
+    res.send(stores);
   } catch (err) {
     console.log(err);
   }
