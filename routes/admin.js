@@ -1,5 +1,6 @@
 import express from "express";
 import { checkIfAuthenticated } from "../middlewares/auth-middleware.js";
+import * as adminController from "../controllers/admin.js";
 const Router = express.Router();
 
 Router.get("/", (req, res) => {
@@ -11,9 +12,12 @@ Router.post("/register", (req, res) => {
     message: "Registering user...",
   });
 });
+
 Router.post("/verifyToken", checkIfAuthenticated, (req, res) => {
-  console.log(req.user)
-  res.json({verified: !!req.user});
+  console.log(req.user);
+  res.json({ verified: !!req.user });
 });
+
+Router.post("/refreshToken", adminController.refreshToken);
 
 export default Router;

@@ -10,6 +10,9 @@ export async function getPublicCategories(req, res) {
     const allCategories = await categoryModel
       .find({ active: true })
       .sort({ categoryName: 1 });
+    // allCategories.forEach(async (category) => {
+    //   // category.dealsCount
+    // });
     res.send(allCategories);
   } catch (err) {
     console.log(err);
@@ -18,9 +21,8 @@ export async function getPublicCategories(req, res) {
 
 export async function getAllCategories(req, res) {
   try {
-    const allCategories = await categoryModel
-      .find()
-      .sort({ categoryName: 1 });
+    const allCategories = await categoryModel.find().sort({ categoryName: 1 });
+
     res.send(allCategories);
   } catch (err) {
     console.log(err);
@@ -55,7 +57,10 @@ export async function getCategoryWithSlug(req, res) {
       .findOne({
         slug: req.params.categorySlug,
       })
-      .populate("offers")
+      .populate({
+        path: "offers",
+        populate: "store",
+      })
       .sort({ categorySlug: -1 });
     res.send(category);
   } catch (err) {
@@ -140,7 +145,9 @@ export async function updateCategory(req, res) {
       //now remove the old image from imageKit
       //grab the old image from the db
       const oldImageName =
-        updatedCategory.image.split("/")[updatedCategory.image.split("/").length - 1];
+        updatedCategory.image.split("/")[
+          updatedCategory.image.split("/").length - 1
+        ];
       //remove the old image from imageKit
       await removeImgFromImageKit(oldImageName);
       res.json(updatedCategory);
@@ -206,7 +213,7 @@ const removeImgFromImageKit = (imageName) => {
       //find the image in imageKit
       const images = await imageKit.listFiles({ name: imageName });
       //if there is an image, delete it
-      if (images.length>0) await imageKit.deleteFile(images[0].fileId);
+      if (images.length > 0) await imageKit.deleteFile(images[0].fileId);
       resolve();
     } catch (err) {
       console.log(err);

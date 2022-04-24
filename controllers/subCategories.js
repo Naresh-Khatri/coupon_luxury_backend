@@ -7,7 +7,6 @@ export async function getPublicSubCategories(req, res) {
     const allCategories = await subCategoryModel
       .find({active:true}).populate('category','categoryName slug')
       .sort({ subCategoryName: -1 });
-      console.log(allCategories[0])
     res.send(allCategories);
   } catch (err) {
     console.log(err);
@@ -19,7 +18,6 @@ export async function getAllSubCategories(req, res) {
     const allCategories = await subCategoryModel
       .find().populate('category','categoryName slug')
       .sort({ subCategoryName: -1 });
-      console.log(allCategories[0])
     res.send(allCategories);
   } catch (err) {
     console.log(err);
