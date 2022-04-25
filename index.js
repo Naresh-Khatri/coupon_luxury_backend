@@ -38,17 +38,19 @@ mongoose.connect(
 app.use(express.json());
 app.use(morgan("dev"));
 //cors
-const corsOptions = {
-  origin: [
-    "http://localhost:8080",
-    "http://localhost:3000",
-    "http://localhost:9100",
-    "https://cl.panipuri.tech/",
-  ],
-  optionsSuccessStatus: 200,
-  credentials: true,
-};
-app.use(cors(corsOptions));
+// const corsOptions = {
+//   origin: [
+//     "http://localhost:8080",
+//     "http://localhost:3000",
+//     "http://localhost:9100",
+//     "https://cl.panipuri.tech/",
+//   ],
+//   optionsSuccessStatus: 200,
+//   credentials: true,
+// };
+// app.use(cors(corsOptions));
+app.use(cors({origin:true, credentials:true}));
+
 app.use(function (req, res, next) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader(
