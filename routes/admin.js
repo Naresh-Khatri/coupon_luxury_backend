@@ -14,7 +14,7 @@ Router.post("/register", (req, res) => {
 });
 
 Router.post("/verifyToken", checkIfAuthenticated, (req, res) => {
-  console.log(req.user);
+  // console.log(req.user);
   res.json({ verified: !!req.user });
 });
 
