@@ -19,9 +19,10 @@ export async function getAllOffers(req, res) {
 export async function getPublicOffers(req, res) {
   try {
     const allOffers = await offerModel
-      .find({ active: true })
+      .find({ ...req.query, active: true })
       .populate("store", "-pageHTML -__v ")
       .sort({ storeName: -1 });
+    console.log(allOffers.length);
     res.send(allOffers);
   } catch (err) {
     console.log(err);
@@ -48,10 +49,10 @@ export async function getOffersWithTitle(req, res) {
       .find({
         title: { $regex: `${req.params.offerTitle}`, $options: "i" },
       })
-      .populate("store", "storeName image slug")
-      // .populate("category", "categoryName categorySlug _id ")
-      // .populate("subCategory", "subCategoryName subCategorySlug _id ")
-      // .populate("offers");
+      .populate("store", "storeName image slug");
+    // .populate("category", "categoryName categorySlug _id ")
+    // .populate("subCategory", "subCategoryName subCategorySlug _id ")
+    // .populate("offers");
     res.send(offers);
   } catch (err) {
     console.log(err);
