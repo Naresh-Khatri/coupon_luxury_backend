@@ -14,6 +14,7 @@ import blogRoutes from "./routes/blog.js";
 import statsRoutes from "./routes/stats.js";
 import subscriptionRoutes from "./routes/subscription.js";
 import slideRoutes from "./routes/slide.js";
+import miscRoutes from "./routes/misc.js";
 import bgVideoRoutes from "./routes/backgroundVideo.js";
 
 const app = express();
@@ -85,6 +86,7 @@ app.use("/stores", storeRoutes);
 app.use("/offers", offerRoutes);
 app.use("/blogs", blogRoutes);
 app.use("/subscriptions", subscriptionRoutes);
+app.use("/misc", miscRoutes);
 app.use("/bg-video", bgVideoRoutes);
 
 app.listen(PORT, () =>
