@@ -12,7 +12,7 @@ import storeRoutes from "./routes/store.js";
 import offerRoutes from "./routes/offer.js";
 import blogRoutes from "./routes/blog.js";
 import statsRoutes from "./routes/stats.js";
-import subscriptionRoutes from "./routes/subscription.js";
+import subscribersRoutes from "./routes/subscription.js";
 import slideRoutes from "./routes/slide.js";
 import miscRoutes from "./routes/misc.js";
 import bgVideoRoutes from "./routes/backgroundVideo.js";
@@ -85,9 +85,13 @@ app.use("/sub-categories", subCategoryRoutes);
 app.use("/stores", storeRoutes);
 app.use("/offers", offerRoutes);
 app.use("/blogs", blogRoutes);
-app.use("/subscriptions", subscriptionRoutes);
+app.use("/subscribers", subscribersRoutes);
 app.use("/misc", miscRoutes);
 app.use("/bg-video", bgVideoRoutes);
+
+app.post('/test', async(req, res)=>{
+  console.log(req.body)
+})
 
 app.listen(PORT, () =>
   console.log("Server is running on http://localhost:" + PORT)
