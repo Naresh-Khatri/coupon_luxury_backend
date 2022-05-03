@@ -10,7 +10,7 @@ export async function getPublicCategories(req, res) {
     const allCategories = await categoryModel
       .find({ active: true })
       .sort({ categoryName: 1 });
-    // allCategories.forEach(async (category) => {
+    // allCategories.forEach(async (category) => 
     //   // category.dealsCount
     // });
     res.send(allCategories);
@@ -77,7 +77,7 @@ export async function createCategory(req, res) {
     // });
     //check if category already exists
     const categoryExists = await categoryModel.findOne({
-      categoryName: req.body.categoryName,
+      slug: req.body.slug,
     });
     if (categoryExists) {
       return res.status(409).send("Category already exists");

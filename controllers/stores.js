@@ -18,7 +18,7 @@ export async function createStore(req, res) {
     // });
     //check if title already exists
     const storeExists = await storeModel.findOne({
-      storeName: req.body.storeName,
+      slug: req.body.slug,
     });
     if (storeExists) {
       return res.status(409).send("store already exists");
@@ -102,6 +102,12 @@ export async function updateStore(req, res) {
     }
   } catch (err) {
     console.log(err);
+    if (err.code === 11000) {
+      return res.status(409).json({
+        message: "store already exists",
+      });
+    }
+    return res.status(400).send("Invalid Request");
   }
 }
 

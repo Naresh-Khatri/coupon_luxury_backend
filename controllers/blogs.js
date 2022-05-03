@@ -8,7 +8,9 @@ import { removeImgFromImageKit } from "../config/imagekitConfig.js";
 
 export async function getPublicBlogs(req, res) {
   try {
-    const allBlogs = await blogModel.find({active:true}).sort({ createdAt: -1 });
+    const allBlogs = await blogModel
+      .find({ active: true })
+      .sort({ createdAt: -1 });
     res.send(allBlogs);
   } catch (err) {
     console.log(err);
@@ -47,6 +49,14 @@ export async function getBlogWithSlug(req, res) {
 export async function createBlog(req, res) {
   try {
     // console.log(req.body);
+    //check if present already
+    const blogExist = await blogModel.findOne({ slug: req.body.slug });
+    if (blogExist) {
+      return res.status(409).json({
+        message: "blog already exists",
+      });
+    }
+
     //upload coverImg and thumbnailImg to imageKit
     const promises = [
       imageKit.upload({
@@ -157,6 +167,12 @@ export async function updateBlog(req, res) {
     }
   } catch (err) {
     console.log(err);
+    if (err.code === 11000) {
+      return res.status(409).json({
+        message: "blog already exists",
+      });
+    }
+    return res.status(400).send("Invalid Request");
   }
 }
 
@@ -179,7 +195,9 @@ export async function deleteBlog(req, res) {
     }
     //delete coverImg and thumbnailImg from imageKit
     const oldCoverImg =
-      deletedBlog.coverImg.split("/")[deletedBlog.coverImg.split("/").length - 1];
+      deletedBlog.coverImg.split("/")[
+        deletedBlog.coverImg.split("/").length - 1
+      ];
     const oldThumbnaiImg =
       deletedBlog.thumbnailImg.split("/")[
         deletedBlog.thumbnailImg.split("/").length - 1

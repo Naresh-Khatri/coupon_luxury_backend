@@ -5,7 +5,8 @@ import subCategoryModel from "../models/subCategoryModel.js";
 export async function getPublicSubCategories(req, res) {
   try {
     const allCategories = await subCategoryModel
-      .find({active:true}).populate('category','categoryName slug')
+      .find({ active: true })
+      .populate("category", "categoryName slug")
       .sort({ subCategoryName: -1 });
     res.send(allCategories);
   } catch (err) {
@@ -16,7 +17,8 @@ export async function getPublicSubCategories(req, res) {
 export async function getAllSubCategories(req, res) {
   try {
     const allCategories = await subCategoryModel
-      .find().populate('category','categoryName slug')
+      .find()
+      .populate("category", "categoryName slug")
       .sort({ subCategoryName: -1 });
     res.send(allCategories);
   } catch (err) {
@@ -89,6 +91,12 @@ export async function updateSubCategory(req, res) {
     res.json(updatedsubCategory);
   } catch (err) {
     console.log(err);
+    if (err.code === 11000) {
+      return res.status(409).json({
+        message: "subCategory already exists",
+      });
+    }
+    return res.status(400).send("Invalid Request");
   }
 }
 
