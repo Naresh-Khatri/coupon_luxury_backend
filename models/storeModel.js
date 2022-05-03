@@ -22,9 +22,9 @@ const StoreSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "SubCategory",
   },
-  storeURL:{
+  storeURL: {
     type: String,
-    required:true
+    required: true,
   },
   country: {
     type: String,
@@ -64,10 +64,8 @@ const StoreSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-});
+},
+{ timestamps: true }
+);
 
 export default mongoose.model("Store", StoreSchema);

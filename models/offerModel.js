@@ -79,10 +79,6 @@ const offerSchema = new mongoose.Schema({
     type: String,
     // required: true,
   },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
   featured: {
     type: Boolean,
     default: false,
@@ -91,6 +87,8 @@ const offerSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
-});
+},
+{ timestamps: true }
+);
 
 export default mongoose.model("Offer", offerSchema);

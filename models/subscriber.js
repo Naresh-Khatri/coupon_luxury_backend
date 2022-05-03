@@ -1,17 +1,16 @@
 import mongoose from "mongoose";
 
-const SubscriberSchema = new mongoose.Schema({
-  email: {
-    type: String,
-    required: true,
+const SubscriberSchema = new mongoose.Schema(
+  {
+    email: {
+      type: String,
+      required: true,
+    },
+    phone: {
+      type: String,
+    },
   },
-  phone: {
-    type: String,
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-});
+  { timestamps: true }
+);
 
 export default mongoose.model("Subscriber", SubscriberSchema);
