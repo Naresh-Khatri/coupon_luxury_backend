@@ -9,12 +9,14 @@ const Router = express.Router();
 Router.get("/", checkIfAuthenticated, async (req, res) => {
   const storesCount = await storeModel.count();
   const categoriesCount = await categoryModel.count();
-  const offersCount = await offerModel.count();
+  const dealsCount = await offerModel.count({ offerType: "deal" });
+  const couponsCount = await offerModel.count({ offerType: "coupon" });
 
   res.json({
     storesCount,
     categoriesCount,
-    offersCount,
+    dealsCount,
+    couponsCount,
   });
 });
 
