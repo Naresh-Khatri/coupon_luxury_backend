@@ -21,7 +21,7 @@ export async function getPublicOffers(req, res) {
     const allOffers = await offerModel
       .find({ ...req.query, active: true })
       .populate("store", "-pageHTML -__v ")
-      .sort({ storeName: -1 });
+      .sort({ createdAt: -1 });
     console.log(allOffers.length);
     res.send(allOffers);
   } catch (err) {
@@ -34,11 +34,12 @@ export async function getOffer(req, res) {
     //do a case insensitive search
     const offer = await offerModel
       .findById(req.params.offerId)
-      .populate("store", "-__v ")
+      .populate("store", "-__v -pageHTML")
       .sort({ storeName: -1 });
     res.send(offer);
   } catch (err) {
     console.log(err);
+    res.status(404).json({err:'offer not found'})
   }
 }
 
