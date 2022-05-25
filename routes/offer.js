@@ -11,6 +11,7 @@ Router.get("/", offerController.getPublicOffers);
 Router.get("/all", checkIfAuthenticated, offerController.getAllOffers);
 
 Router.get("/:offerId", offerController.getOffer);
+Router.get("/getWithSlug/:offerSlug", offerController.getOfferWithSlug);
 
 Router.get("/getUsingTitle/:offerTitle", offerController.getOffersWithTitle);
 
