@@ -21,8 +21,8 @@ export async function getPublicOffers(req, res) {
     const allOffers = await offerModel
       .find({ ...req.query, active: true })
       .populate("store", "-pageHTML -__v ")
-      .sort({ createdAt: -1 });
-    console.log(allOffers.length);
+      .sort({ updatedAt: -1 });
+    // console.log(allOffers);
     res.send(allOffers);
   } catch (err) {
     console.log(err);
@@ -39,7 +39,20 @@ export async function getOffer(req, res) {
     res.send(offer);
   } catch (err) {
     console.log(err);
-    res.status(404).json({err:'offer not found'})
+    res.status(404).json({ err: "offer not found" });
+  }
+}
+export async function getOfferWithSlug(req, res) {
+  try {
+    //do a case insensitive search
+    const offer = await offerModel
+      .findOne({ slug: req.params.offerSlug })
+      .populate("store", "-__v -pageHTML")
+      .sort({ storeName: -1 });
+    res.send(offer);
+  } catch (err) {
+    console.log(err);
+    res.status(404).json({ err: "offer not found" });
   }
 }
 
@@ -109,6 +122,12 @@ export async function createOffer(req, res) {
     // });
   } catch (err) {
     console.log(err);
+    if (err.code == 11000) {
+      return res.status(409).json({
+        code: 11000,
+        message: "Slug already exists",
+      });
+    }
     res.status(400).send("Invalid Request");
   }
 }
@@ -142,6 +161,13 @@ export async function updateOffer(req, res) {
     res.json(offer);
   } catch (err) {
     console.log(err);
+    if (err.code == 11000) {
+      return res.status(409).json({
+        code: 11000,
+        message: "Slug already exists",
+      });
+    }
+    res.status(400).send("Invalid Request");
   }
 }
 
