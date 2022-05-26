@@ -129,7 +129,7 @@ export async function getStoresWithName(req, res) {
     //do a case insensitive search
     const stores = await storeModel
       .find({
-        storeName: { $regex: `^${req.params.storeName}`, $options: "i" },
+        storeName: { $regex: `${req.params.storeName}`, $options: "i" },
       })
       .select("storeName slug image _id")
       // .populate("category", "categoryName categorySlug _id ")
@@ -159,7 +159,7 @@ export async function getStoreWithSlug(req, res) {
 export async function getAutoCompleteData(req, res) {
   try {
     const { searchText } = req.body;
-    const regex = new RegExp(`^${searchText}`);
+    const regex = new RegExp(searchText);
     console.log(req.body);
     //do a case insensitive search
     const store = await storeModel

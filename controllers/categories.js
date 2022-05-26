@@ -169,7 +169,7 @@ export async function updateCategory(req, res) {
 export async function getAutoCompleteData(req, res) {
   try {
     const { searchText } = req.body;
-    const regex = new RegExp(`^${searchText}`);
+    const regex = new RegExp(`${searchText}`);
     //do a case insensitive search
     const category = await categoryModel
       .find({
