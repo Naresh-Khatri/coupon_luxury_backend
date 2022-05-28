@@ -23,6 +23,9 @@ const slideSchema = new mongoose.Schema(
     uid: {
       type: String,
     },
+    imgAlt: {
+      type: String,
+    },
   },
   { timestamps: true }
 );

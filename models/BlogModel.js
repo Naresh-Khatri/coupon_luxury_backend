@@ -20,6 +20,9 @@ const BlogSchema = new mongoose.Schema(
       unique: true,
       required: true,
     },
+    imgAlt: {
+      type: String,
+    },
     smallDescription: {
       type: String,
       required: true,
