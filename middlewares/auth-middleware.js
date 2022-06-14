@@ -22,7 +22,7 @@ export const checkIfAuthenticated = async (req, res, next) => {
     req.user = decodedToken;
     next();
   } catch (err) {
-    console.error(err);
+    // console.error(err);
     console.error(err.code);
     if (err.code === "auth/argument-error") {
       console.log('You have not provided a token.');
