@@ -1,8 +1,6 @@
 import express from "express";
 import { SitemapStream, streamToPromise } from "sitemap";
 import { createGzip } from "zlib";
-import { Readable } from "stream";
-import SitemapGenerator from "sitemap-generator";
 
 import BlogModel from "../models/BlogModel.js";
 import OfferModel from "../models/offerModel.js";
