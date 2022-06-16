@@ -10,6 +10,7 @@ import CategoryModel from "../models/categoryModel.js";
 const Router = express.Router();
 
 let sitemap;
+
 Router.get("/", async (req, res) => {
   const promises = [
     getSlugs("stores"),
@@ -44,14 +45,14 @@ Router.get("/", async (req, res) => {
     sitemapURLs.forEach((link) => {
       smStream.write(link);
     });
-    // smStream.write({ url: "/page-1/", changefreq: "daily", priority: 0.3 });
-    //   smStream.write({ url: "/page-2/", changefreq: "monthly", priority: 0.7 });
-    //   smStream.write({ url: "/page-3/" }); // changefreq: 'weekly',  priority: 0.5
-    //   smStream.write({ url: "/page-4/", img: "http://urlTest.com" });
-    // Readable.from([{url: '/page-1'}]).pipe(smStream);
-    // if you are looking to avoid writing your own loop.
     // cache the response
     streamToPromise(pipeline).then((sm) => (sitemap = sm));
+
+    //remove cached entry after 1 min
+    setTimeout(() => {
+      sitemap = null;
+    }, 60 * 1000);
+
     // make sure to attach a write stream such as streamToPromise before ending
     smStream.end();
     // stream write the response
