@@ -5,6 +5,7 @@ import cors from "cors";
 import "dotenv/config";
 
 //routes
+import sitemapRoutes from "./routes/sitemap.js";
 import adminRoutes from "./routes/admin.js";
 import categoryRoutes from "./routes/category.js";
 import subCategoryRoutes from "./routes/subCategory.js";
@@ -26,6 +27,7 @@ mongoose.connect(
   {
     useNewUrlParser: true,
     useUnifiedTopology: true,
+    autoIndex: true, //make this also true
   },
   (err) => {
     if (err) {
@@ -50,7 +52,7 @@ app.use(morgan("dev"));
 //   credentials: true,
 // };
 // app.use(cors(corsOptions));
-app.use(cors({origin:true, credentials:true}));
+app.use(cors({ origin: true, credentials: true }));
 
 app.use(function (req, res, next) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -76,6 +78,7 @@ app.use((req, res, next) => {
     res.send("400 Bad Request");
   }
 });
+app.use('/sitemap.xml', sitemapRoutes);
 app.use("/admin", adminRoutes);
 app.use("/stats", statsRoutes);
 app.use("/blogs", blogRoutes);
@@ -89,9 +92,9 @@ app.use("/subscribers", subscribersRoutes);
 app.use("/misc", miscRoutes);
 app.use("/bg-video", bgVideoRoutes);
 
-app.post('/test', async(req, res)=>{
-  console.log(req.body)
-})
+app.post("/test", async (req, res) => {
+  console.log(req.body);
+});
 
 app.listen(PORT, () =>
   console.log("Server is running on http://localhost:" + PORT)
