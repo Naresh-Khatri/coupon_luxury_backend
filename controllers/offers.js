@@ -18,11 +18,20 @@ export async function getAllOffers(req, res) {
 
 export async function getPublicOffers(req, res) {
   try {
-    const allOffers = await offerModel
-      .find({ ...req.query, active: true })
-      .populate("store", "-pageHTML -__v ")
-      .sort({ updatedAt: -1 });
-    // console.log(allOffers);
+    let allOffers = null;
+    console.log(req.query);
+    const query = {};
+    if (req.query.featured) query.featured = true;
+    if (req.query.active) query.active = true;
+    if (req.query.category) query.category = req.query.category;
+    if (req.query.offerType) query.offerType = req.query.offerType;
+    if (req.query.limit) query.limit = req.query.limit;
+    allOffers = await offerModel
+      .find(query)
+      .limit(req.query.limit)
+      .sort({ updatedAt: -1 })
+      .populate("store", "-pageHTML -__v ");
+
     res.send(allOffers);
   } catch (err) {
     console.log(err);
