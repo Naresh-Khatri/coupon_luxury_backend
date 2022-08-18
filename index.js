@@ -4,6 +4,8 @@ import mongoose from "mongoose";
 import cors from "cors";
 import "dotenv/config";
 
+import compression from "compression";
+
 //routes
 import sitemapRoutes from "./routes/sitemap.js";
 import adminRoutes from "./routes/admin.js";
@@ -37,9 +39,9 @@ mongoose.connect(
     }
   }
 );
-
-app.use(express.json());
+app.use(compression());
 app.use(morgan("dev"));
+
 //cors
 // const corsOptions = {
 //   origin: [
@@ -53,6 +55,7 @@ app.use(morgan("dev"));
 // };
 // app.use(cors(corsOptions));
 app.use(cors({ origin: true, credentials: true }));
+app.use(express.json());
 
 app.use(function (req, res, next) {
   res.setHeader("Access-Control-Allow-Origin", "*");
