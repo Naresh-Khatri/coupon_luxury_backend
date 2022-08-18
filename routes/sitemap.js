@@ -23,7 +23,7 @@ Router.get("/", async (req, res) => {
   const sitemapURLs = [].concat.apply(
     [
       {
-        url: "https://couponluxury.com",
+        url: "https://www.couponluxury.com",
         changefreq: "monthly",
         priority: 1,
       },
@@ -75,7 +75,7 @@ const getSlugs = (type) => {
           .then((offers) => {
             const offersSitemap = offers.map((offer) => {
               return {
-                url: "https://couponluxury.com/deal/" + offer.slug,
+                url: "https://www.couponluxury.com/deal/" + offer.slug,
                 lastmod: offer.updatedAt,
                 changefreq: "daily",
                 priority: 0.8,
@@ -92,7 +92,7 @@ const getSlugs = (type) => {
           .then((blogs) => {
             const blogsSitemap = blogs.map((blog) => {
               return {
-                url: "https://couponluxury.com/blogs/" + blog.slug,
+                url: "https://www.couponluxury.com/blogs/" + blog.slug,
                 lastmod: blog.updatedAt,
                 changefreq: "daily",
                 priority: 0.8,
@@ -109,7 +109,7 @@ const getSlugs = (type) => {
           .then((categories) => {
             const categoriesSitemap = categories.map((category) => {
               return {
-                url: "https://couponluxury.com/categories/" + category.slug,
+                url: "https://www.couponluxury.com/categories/" + category.slug,
                 lastmod: category.updatedAt,
                 changefreq: "weekly",
                 priority: 0.8,
@@ -127,7 +127,7 @@ const getSlugs = (type) => {
           .then((stores) => {
             const storesSitemap = stores.map((store) => {
               return {
-                url: "https://couponluxury.com/stores/" + store.slug,
+                url: "https://www.couponluxury.com/stores/" + store.slug,
                 lastmod: store.updatedAt,
                 changefreq: "daily",
                 priority: 0.8,
