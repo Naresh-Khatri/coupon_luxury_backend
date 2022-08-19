@@ -19,6 +19,7 @@ import subscribersRoutes from "./routes/subscription.js";
 import slideRoutes from "./routes/slide.js";
 import miscRoutes from "./routes/misc.js";
 import bgVideoRoutes from "./routes/backgroundVideo.js";
+import uploadRoutes from "./routes/upload.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -94,6 +95,7 @@ app.use("/blogs", blogRoutes);
 app.use("/subscribers", subscribersRoutes);
 app.use("/misc", miscRoutes);
 app.use("/bg-video", bgVideoRoutes);
+app.use("/uploads", uploadRoutes);
 
 app.post("/test", async (req, res) => {
   console.log(req.body);
