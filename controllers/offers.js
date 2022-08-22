@@ -19,13 +19,13 @@ export async function getAllOffers(req, res) {
 export async function getPublicOffers(req, res) {
   try {
     let allOffers = null;
-    console.log(req.query);
-    const query = {};
+    // console.log("public:", req.query);
+    const query = { active: true };
     if (req.query.featured) query.featured = true;
-    if (req.query.active) query.active = true;
     if (req.query.category) query.category = req.query.category;
     if (req.query.offerType) query.offerType = req.query.offerType;
     if (req.query.limit) query.limit = req.query.limit;
+
     allOffers = await offerModel
       .find(query)
       .limit(req.query.limit)
