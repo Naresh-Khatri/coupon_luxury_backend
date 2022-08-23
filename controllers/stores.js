@@ -58,7 +58,6 @@ export async function createStore(req, res) {
     res.status(400).send("Invalid Request");
   }
 }
-
 export async function updateStore(req, res) {
   try {
     // console.log(req.params.storeId, req.body, req.files);
@@ -110,7 +109,6 @@ export async function updateStore(req, res) {
     return res.status(400).send("Invalid Request");
   }
 }
-
 export async function getStore(req, res) {
   try {
     //do a case insensitive search
@@ -131,10 +129,10 @@ export async function getStoresWithName(req, res) {
       .find({
         storeName: { $regex: `${req.params.storeName}`, $options: "i" },
       })
-      .select("storeName slug image _id")
-      // .populate("category", "categoryName categorySlug _id ")
-      // .populate("subCategory", "subCategoryName subCategorySlug _id ")
-      // .populate("offers");
+      .select("storeName slug image _id");
+    // .populate("category", "categoryName categorySlug _id ")
+    // .populate("subCategory", "subCategoryName subCategorySlug _id ")
+    // .populate("offers");
     res.send(stores);
   } catch (err) {
     console.log(err);
@@ -150,7 +148,7 @@ export async function getStoreWithSlug(req, res) {
       })
       .populate("category", "categoryName categorySlug _id ")
       .populate("subCategory", "subCategoryName subCategorySlug _id ")
-      .populate("offers");
+      .populate({ path: "offers", match: { active: true } });
     res.send(store);
   } catch (err) {
     console.log(err);
