@@ -184,21 +184,20 @@ export async function getAllStores(req, res) {
   }
 }
 export async function getPublicStores(req, res) {
-  let allStores = null;
   try {
-    if (req.query.featured === "true") {
-      allStores = await storeModel
-        .find({ featured: true, active: true })
-        .populate("category", "categoryName categorySlug _id ")
-        .populate("subCategory", "subCategoryName subCategorySlug _id ")
-        .sort({ title: -1 });
-    } else {
-      allStores = await storeModel
-        .find({ active: true })
-        .populate("category", "categoryName categorySlug _id ")
-        .populate("subCategory", "subCategoryName subCategorySlug _id ")
-        .sort({ title: -1 });
-    }
+    const query = { active: true };
+    if (req.query.featured) query.featured = true;
+    if (req.query.category) query.category = req.query.category;
+    if (req.query.offerType) query.offerType = req.query.offerType;
+    if (req.query.limit) query.limit = req.query.limit;
+
+    let allStores = await storeModel
+      .find(query)
+      .limit(req.query.limit)
+      .select("storeName slug image _id")
+      .populate("category", "categoryName categorySlug _id ")
+      .populate("subCategory", "subCategoryName subCategorySlug _id ")
+      .sort({ title: -1 });
     res.send(allStores);
   } catch (err) {
     console.log(err);
