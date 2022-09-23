@@ -20,6 +20,7 @@ import slideRoutes from "./routes/slide.js";
 import miscRoutes from "./routes/misc.js";
 import bgVideoRoutes from "./routes/backgroundVideo.js";
 import uploadRoutes from "./routes/upload.js";
+import mainRoutes from "./routes/main.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -82,7 +83,7 @@ app.use((req, res, next) => {
     res.send("400 Bad Request");
   }
 });
-app.use('/sitemap.xml', sitemapRoutes);
+app.use("/sitemap.xml", sitemapRoutes);
 app.use("/admin", adminRoutes);
 app.use("/stats", statsRoutes);
 app.use("/blogs", blogRoutes);
@@ -96,6 +97,7 @@ app.use("/subscribers", subscribersRoutes);
 app.use("/misc", miscRoutes);
 app.use("/bg-video", bgVideoRoutes);
 app.use("/uploads", uploadRoutes);
+app.use("/main", mainRoutes);
 
 app.post("/test", async (req, res) => {
   console.log(req.body);
