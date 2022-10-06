@@ -96,7 +96,8 @@ export async function updateSlide(req, res) {
 export async function getPublicSlides(req, res) {
   try {
     //do a case insensitive search
-    const slides = await slideModel.find({active:true}).sort({ order: -1 });
+    const slides = await slideModel.find({active:true}).sort({ order: -1 })
+    .select("-uid -__v -createdAt -updatedAt -_id -active");
     res.send(slides);
   } catch (err) {
     console.log(err);

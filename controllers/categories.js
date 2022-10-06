@@ -10,7 +10,7 @@ export async function getPublicCategories(req, res) {
     const allCategories = await categoryModel
       .find({ active: true })
       .sort({ categoryName: 1 });
-    // allCategories.forEach(async (category) => 
+    // allCategories.forEach(async (category) =>
     //   // category.dealsCount
     // });
     res.send(allCategories);
@@ -59,7 +59,10 @@ export async function getCategoryWithSlug(req, res) {
       })
       .populate({
         path: "offers",
-        populate: "store",
+        populate: {
+          path: "store",
+          select: "_id image storeName storeURL slug",
+        },
       })
       .sort({ categorySlug: -1 });
     res.send(category);
