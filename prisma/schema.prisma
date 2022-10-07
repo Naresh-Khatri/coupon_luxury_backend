@@ -1,0 +1,164 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Blog {
+  id               Int     @id @default(autoincrement())
+  title            String
+  storeId          Int
+  store            Store?  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  slug             String  @unique
+  imgAlt           String?
+  coverImg         String?
+  thumbnailImg     String?
+  smallDescription String
+  fullDescription  String
+  featured         Boolean @default(false)
+  active           Boolean @default(false)
+  uid              String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  metaTitle       String?
+  metaDescription String?
+  metaKeywords    String?
+  metaSchema      String?
+}
+
+model Store {
+  id            Int         @id @default(autoincrement())
+  uid           String
+  categoryId    Int
+  category      Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  subCategoryId Int
+  subCategory   SubCategory @relation(fields: [subCategoryId], references: [id], onDelete: Cascade)
+  storeURL      String      @unique
+  image         String
+  storeName     String
+  pageHTML      String
+  country       String
+  slug          String      @unique
+  offers        Offer[]
+  blogs         Blog[]
+  active        Boolean     @default(false)
+  featured      Boolean     @default(false)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  metaTitle       String?
+  metaDescription String?
+  metaKeywords    String?
+  metaSchema      String?
+}
+
+model Offer {
+  id            Int         @id @default(autoincrement())
+  uid           String
+  slug          String      @unique
+  categoryId    Int
+  category      Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  subCategoryId Int
+  subCategory   SubCategory @relation(fields: [subCategoryId], references: [id], onDelete: Cascade)
+  storeId       Int
+  store         Store       @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  title         String
+  description   String
+  TnC           String
+  URL           String
+  affURL        String
+  offerType     String
+  discountType  String
+  discountValue String
+  couopnCode    String?     @default("")
+  startDate     DateTime
+  endDate       DateTime
+
+  active    Boolean  @default(false)
+  featured  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  metaTitle       String?
+  metaDescription String?
+  metaKeywords    String?
+  metaSchema      String?
+}
+
+model Category {
+  id            Int           @id @default(autoincrement())
+  uid           String
+  categoryName  String
+  slug          String        @unique
+  image         String
+  imgAlt        String
+  offers        Offer[]
+  subCategories SubCategory[]
+  description   String?
+  pageHTML      String?
+
+  featured  Boolean  @default(false)
+  active    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  metaTitle       String?
+  metaDescription String?
+  metaKeywords    String?
+  metaSchema      String?
+  Store           Store[]
+}
+
+model Slide {
+  id     Int    @id @default(autoincrement())
+  uid    String
+  title  String
+  order  Int
+  link   String
+  image  String
+  imgAlt String
+
+  active    Boolean  @default(false)
+  featured  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  metaTitle       String?
+  metaDescription String?
+  metaKeywords    String?
+  metaSchema      String?
+}
+
+model SubCategory {
+  id              Int      @id @default(autoincrement())
+  uid             String
+  subCategoryName String
+  description     String?
+  categoryId      Int
+  category        Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  slug            String   @unique
+
+  active    Boolean  @default(false)
+  featured  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Store Store[]
+  Offer Offer[]
+}
+
+model Subscriber {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  phone     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
