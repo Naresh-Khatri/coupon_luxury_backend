@@ -1,9 +1,11 @@
-import streamifier from "streamifier";
-import subscriberModel from "../models/subscriber.js";
+import serializer from "../utils/serializer.js";
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
 
 export async function getAllSubs(req, res) {
   try {
-    const allSubs = await subscriberModel.find({}).sort({ createdAt: -1 });
+    const allSubs = await prisma.subscriber.findMany();
+    // const allSubs = await subscriberModel.find({}).sort({ createdAt: -1 });
     console.log(allSubs);
     res.send(allSubs);
   } catch (err) {
@@ -15,7 +17,12 @@ export async function getAllSubs(req, res) {
 export async function getSub(req, res) {
   try {
     console.log(req.params.subId);
-    const subscriber = await subscriberModel.findById(req.params.subCategoryId);
+    const sub = await prisma.subscriber.findUnique({
+      where: {
+        id: parseInt(req.params.subId),
+      },
+    });
+    // const subscriber = await subscriberModel.findById(req.params.subCategoryId);
     res.send(subscriber);
   } catch (err) {
     res.status(400).send("Invalid Request");
@@ -25,44 +32,45 @@ export async function getSub(req, res) {
 
 export async function createSub(req, res) {
   try {
-    const newSub = await subscriberModel({
-      ...req.body,
+    const data = serializer(req.body);
+    const newSub = await prisma.subscriber.create({
+      data,
     });
-    newSub.save((err, result) => {
-      if (err) {
-        res.status(400).send("Invalid Request");
-        console.log(err);
-      }
-      res.send(result);
-    });
+    res.send(newSub);
   } catch (err) {
     console.log(err);
-    res.status(400).send("Invalid Request");
+    if (err.code === "P2002")
+      res.status(400).json({ err: "subscriber already exists", code: err.code });
+    else res.status(400).send("Invalid Request");
   }
 }
 
 export async function updateSub(req, res) {
   try {
     // console.log(req.params.subCategoryId, req.body, req.files);
-    //check if image is provided
-    const updatedSub = await subscriberModel.findByIdAndUpdate(
-      req.params.subId,
-      req.body,
-      { new: true }
-    );
+    const data = serializer(req.body);
+    const updatedSub = await prisma.subscriber.update({
+      where: {
+        id: parseInt(req.params.subId),
+      },
+      data,
+    });
     res.json(updatedSub);
   } catch (err) {
-    res.status(400).send("Invalid Request");
     console.log(err);
+    if (err.code === "P2002")
+      res.status(400).json({ err: "subscriber already exists", code: err.code });
+    else res.status(400).send("Invalid Request");
   }
 }
 
 export async function deleteSub(req, res) {
   try {
-    const deletedSub = await subscriberModel.findByIdAndRemove(
-      req.params.subId
-    );
-
+    const deletedSub = await prisma.subscriber.delete({
+      where: {
+        id: parseInt(req.params.subId),
+      },
+    });
     res.json(deletedSub);
   } catch (err) {
     res.status(400).send("Invalid Request");
