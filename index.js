@@ -1,15 +1,16 @@
 import express from "express";
 import morgan from "morgan";
-import mongoose from "mongoose";
 import cors from "cors";
 import "dotenv/config";
 
 import compression from "compression";
 
 //routes
-import sitemapRoutes from "./routes/sitemap.js";
 import adminRoutes from "./routes/admin.js";
+
 import categoryRoutes from "./routes/category.js";
+
+import sitemapRoutes from "./routes/sitemap.js";
 import subCategoryRoutes from "./routes/subCategory.js";
 import storeRoutes from "./routes/store.js";
 import offerRoutes from "./routes/offer.js";
@@ -22,40 +23,16 @@ import bgVideoRoutes from "./routes/backgroundVideo.js";
 import uploadRoutes from "./routes/upload.js";
 import mainRoutes from "./routes/main.js";
 
+
+import { PrismaClient } from "@prisma/client";
+export const prisma = new PrismaClient();
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-//DB connection
-mongoose.connect(
-  process.env.DB_CONNECTION,
-  {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    autoIndex: true, //make this also true
-  },
-  (err) => {
-    if (err) {
-      console.log("DB connection error: ", err);
-    } else {
-      console.log("DB connected");
-    }
-  }
-);
 app.use(compression());
 app.use(morgan("dev"));
 
-//cors
-// const corsOptions = {
-//   origin: [
-//     "http://localhost:8080",
-//     "http://localhost:3000",
-//     "http://localhost:9100",
-//     "https://cl.panipuri.tech/",
-//   ],
-//   optionsSuccessStatus: 200,
-//   credentials: true,
-// };
-// app.use(cors(corsOptions));
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 
