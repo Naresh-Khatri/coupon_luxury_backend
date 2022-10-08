@@ -1,15 +1,30 @@
-import streamifier from "streamifier";
-import categoryModel from "../models/categoryModel.js";
-import subCategoryModel from "../models/subCategoryModel.js";
-import storeModel from "../models/storeModel.js";
-import offerModel from "../models/offerModel.js";
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
+import serializer from "../utils/serializer.js";
 
 export async function getAllOffers(req, res) {
   try {
-    const allOffers = await offerModel
-      .find()
-      .populate("store", "-pageHTML -__v ")
-      .sort({ storeName: -1 });
+    const allOffers = await prisma.offer.findMany({
+      include: {
+        store: {
+          select: {
+            id: true,
+            storeName: true,
+            slug: true,
+            storeURL: true,
+            active: true,
+            categoryId: true,
+            subCategoryId: true,
+            featured: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+      },
+      orderBy: {
+        updatedAt: "desc",
+      },
+    });
     res.send(allOffers);
   } catch (err) {
     console.log(err);
@@ -18,19 +33,36 @@ export async function getAllOffers(req, res) {
 
 export async function getPublicOffers(req, res) {
   try {
-    let allOffers = null;
     // console.log("public:", req.query);
     const query = { active: true };
     if (req.query.featured) query.featured = true;
     if (req.query.category) query.category = req.query.category;
     if (req.query.offerType) query.offerType = req.query.offerType;
-    if (req.query.limit) query.limit = req.query.limit;
+    // if (req.query.limit) query.limit = req.query.limit;
 
-    allOffers = await offerModel
-      .find(query)
-      .limit(req.query.limit)
-      .sort({ updatedAt: -1 })
-      .populate("store", "-pageHTML -__v ");
+    const allOffers = await prisma.offer.findMany({
+      where: query,
+      limit: query.limit,
+      include: {
+        store: {
+          select: {
+            id: true,
+            storeName: true,
+            slug: true,
+            storeURL: true,
+            active: true,
+            categoryId: true,
+            subCategoryId: true,
+            featured: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+      },
+      orderBy: {
+        updatedAt: "desc",
+      },
+    });
 
     res.send(allOffers);
   } catch (err) {
@@ -41,10 +73,27 @@ export async function getPublicOffers(req, res) {
 export async function getOffer(req, res) {
   try {
     //do a case insensitive search
-    const offer = await offerModel
-      .findById(req.params.offerId)
-      .populate("store", "-__v -pageHTML")
-      .sort({ storeName: -1 });
+    const offer = await prisma.offer.findUnique({
+      where: {
+        id: parseInt(req.params.offerId),
+      },
+      include: {
+        store: {
+          select: {
+            id: true,
+            storeName: true,
+            slug: true,
+            storeURL: true,
+            active: true,
+            categoryId: true,
+            subCategoryId: true,
+            featured: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+      },
+    });
     res.send(offer);
   } catch (err) {
     console.log(err);
@@ -53,11 +102,27 @@ export async function getOffer(req, res) {
 }
 export async function getOfferWithSlug(req, res) {
   try {
-    //do a case insensitive search
-    const offer = await offerModel
-      .findOne({ slug: req.params.offerSlug })
-      .populate("store", "-__v -pageHTML")
-      .sort({ storeName: -1 });
+    const offer = await prisma.offer.findUnique({
+      where: {
+        slug: req.params.offerSlug,
+      },
+      include: {
+        store: {
+          select: {
+            id: true,
+            storeName: true,
+            slug: true,
+            storeURL: true,
+            active: true,
+            categoryId: true,
+            subCategoryId: true,
+            featured: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+      },
+    });
     res.send(offer);
   } catch (err) {
     console.log(err);
@@ -68,11 +133,25 @@ export async function getOfferWithSlug(req, res) {
 export async function getOffersWithTitle(req, res) {
   try {
     //do a case insensitive search
-    const offers = await offerModel
-      .find({
-        title: { $regex: `${req.params.offerTitle}`, $options: "i" },
-      })
-      .populate("store", "storeName image slug");
+    const offers = await prisma.offer.findMany({
+      where: {
+        title: {
+          contains: req.params.offerTitle,
+          mode: "insensitive",
+        },
+      },
+      include: {
+        store: {
+          select: {
+            id: true,
+            storeName: true,
+            slug: true,
+            storeURL: true,
+            image: true,
+          },
+        },
+      },
+    });
     // .populate("category", "categoryName categorySlug _id ")
     // .populate("subCategory", "subCategoryName subCategorySlug _id ")
     // .populate("offers");
@@ -84,60 +163,59 @@ export async function getOffersWithTitle(req, res) {
 
 export async function createOffer(req, res) {
   try {
-    // return res.status(200).json({
-    //   message: "subCategory created successfully",
-    // });
     //create new subCategory
-    const newOffer = await offerModel({
-      ...req.body,
-      uid: req.user.uid,
-    });
+    const data = serializer({ ...req.body, uid: req.user.uid });
 
+    const newOffer = await prisma.offer.create({
+      data,
+    });
     //now save it in store, category and subCategory collections
-    const store = await storeModel.findById(req.body.store);
-    store.offers.push(newOffer);
-    await store.save();
+    const store = await prisma.store.update({
+      where: {
+        id: parseInt(req.body.storeId),
+      },
+      data: {
+        offers: {
+          connect: {
+            id: newOffer.id,
+          },
+        },
+      },
+    });
     console.log("saved in store", store.offers);
-    const category = await categoryModel.findById(req.body.category);
-    category.offers.push(newOffer);
-    await category.save();
+    const category = await prisma.category.update({
+      where: {
+        id: parseInt(req.body.categoryId),
+      },
+      data: {
+        offers: {
+          connect: {
+            id: newOffer.id,
+          },
+        },
+      },
+    });
     console.log("saved in category", category.offers);
-    const subCategory = await subCategoryModel.findById(req.body.subCategory);
-    subCategory.offers.push(newOffer);
-    await subCategory.save();
+    const subCategory = await prisma.subCategory.update({
+      where: {
+        id: parseInt(req.body.subCategoryId),
+      },
+      data: {
+        offers: {
+          connect: {
+            id: newOffer.id,
+          },
+        },
+      },
+    });
     console.log("saved in sub cat", subCategory.offers);
 
-    //now save it in offer collection
-    const savedOffer = await newOffer.save();
-    console.log("saved in offer", savedOffer.offers);
-
-    res.json(savedOffer);
-    // store.save((err, savedStore) => {
-    //   if (err) {
-    //     console.log("error saving offer in store", err);
-    //   }
-    //   newOffer.save((err, savedOffer) => {
-    //     if (err) {
-    //       console.log(err);
-    //       if (err.code === 11000) {
-    //         return res.status(409).json({
-    //           message: "Offer already exists",
-    //         });
-    //       }
-    //       return res.status(400).send("Invalid Request");
-    //     }
-    //     res.json(savedOffer);
-    //   });
-    // });
+    res.json(newOffer);
   } catch (err) {
     console.log(err);
-    if (err.code == 11000) {
-      return res.status(409).json({
-        code: 11000,
-        message: "Slug already exists",
-      });
-    }
-    res.status(400).send("Invalid Request");
+    if (err.code === "P2002")
+      res.status(400).json({ err: "slug already exists", code: err.code });
+    else res.status(400).send("Invalid Request");
   }
 }
 
@@ -145,58 +223,118 @@ export async function updateOffer(req, res) {
   try {
     // console.log(req.params.offerId, req.body);
     //update the offer info
-    const offer = await offerModel.findByIdAndUpdate(
-      req.params.offerId,
-      req.body,
-      { new: false }
-    );
-    // get the old store to remove offer from it
-    const oldStore = offer.store;
-    //save offer in the new store if not present
-    const newStore = await storeModel.findById(req.body.store);
-    if (!newStore.offers.includes(req.params.offerId)) {
-      // console.log("doesnt have offer, adding it");
-      newStore.offers.push(req.params.offerId);
-      await newStore.save();
-      // console.log(newStore);
-      // console.log("removing offer from old");
-      //remove the offer from old store
-      const oldOffer = await storeModel.findByIdAndUpdate(
-        oldStore,
-        { $pull: { offers: req.params.offerId } },
-        { new: true }
-      );
+    const data = serializer(req.body);
+    const updatedOffer = await prisma.offer.update({
+      where: {
+        id: parseInt(req.params.offerId),
+      },
+      data,
+    });
+    //check if store, category or subCategory has changed
+    //if yes, update the offer in the new store, category and subCategory collections
+    if (
+      req.body.storeId != updatedOffer.id ||
+      req.body.categoryId != updatedOffer.categoryId ||
+      req.body.subCategoryId != updatedOffer.subCategoryId
+    ) {
+      //now update the offer in store, category and subCategory tables
+      const store = await prisma.store.update({
+        where: {
+          id: parseInt(req.body.storeId),
+        },
+        data: {
+          offers: {
+            connect: {
+              id: updatedOffer.id,
+            },
+          },
+        },
+      });
+      console.log("updated in store", store.offers);
+      const category = await prisma.category.update({
+        where: {
+          id: parseInt(req.body.categoryId),
+        },
+        data: {
+          offers: {
+            connect: {
+              id: updatedOffer.id,
+            },
+          },
+        },
+      });
+
+      console.log("updated in category", category.offers);
+
+      const subCategory = await prisma.subCategory.update({
+        where: {
+          id: parseInt(req.body.subCategoryId),
+        },
+        data: {
+          offers: {
+            connect: {
+              id: updatedOffer.id,
+            },
+          },
+        },
+      });
+      console.log("updated in sub cat", subCategory.offers);
     }
-    res.json(offer);
+    res.json(updatedOffer);
   } catch (err) {
     console.log(err);
-    if (err.code == 11000) {
-      return res.status(409).json({
-        code: 11000,
-        message: "Slug already exists",
-      });
-    }
     res.status(400).send("Invalid Request");
   }
 }
 
 export async function deleteOffer(req, res) {
   try {
-    const offerToBeDeleted = await offerModel.findById(req.params.offerId);
-    //delete offer from store, category and subCategory collections
-    const store = await storeModel.findById(offerToBeDeleted.store);
-    store.offers.pull(req.params.offerId);
-    await store.save();
-    const category = await categoryModel.findById(offerToBeDeleted.category);
-    category.offers.pull(req.params.offerId);
-    await category.save();
-    const subCategory = await subCategoryModel.findById(
-      offerToBeDeleted.subCategory
-    );
-    subCategory.offers.pull(req.params.offerId);
-    await subCategory.save();
+    const deletedOffer = await prisma.offer.delete({
+      where: {
+        id: parseInt(req.params.offerId),
+      },
+    });
 
-    const deletedOffer = await offerModel.findByIdAndRemove(req.params.offerId);
+    //now delete the offer from store, category and subCategory collections
+    const store = await prisma.store.update({
+      where: {
+        id: parseInt(req.body.storeId),
+      },
+      data: {
+        offers: {
+          disconnect: {
+            id: deletedOffer.id,
+          },
+        },
+      },
+    });
+    console.log("deleted from store", store.offers);
+    const category = await prisma.category.update({
+      where: {
+        id: parseInt(req.body.categoryId),
+      },
+      data: {
+        offers: {
+          disconnect: {
+            id: deletedOffer.id,
+          },
+        },
+      },
+    });
+    console.log("deleted from category", category.offers);
+    const subCategory = await prisma.subCategory.update({
+      where: {
+        id: parseInt(req.body.subCategoryId),
+      },
+      data: {
+        offers: {
+          disconnect: {
+            id: deletedOffer.id,
+          },
+        },
+      },
+    });
+    console.log("deleted from sub cat", subCategory.offers);
 
     res.json(deletedOffer);
   } catch (err) {
