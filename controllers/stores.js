@@ -41,9 +41,7 @@ export async function createStore(req, res) {
   } catch (err) {
     console.log(err);
     if (err.code === "P2002")
-      res
-        .status(400)
-        .json({ err: "slug already exists", code: err.code });
+      res.status(400).json({ err: "slug already exists", code: err.code });
     else res.status(400).send("Invalid Request");
   }
 }
@@ -111,10 +109,9 @@ export async function getStore(req, res) {
       where: {
         id: parseInt(req.params.storeId),
       },
-      orderBy: {
-        storeName: "asc",
-      },
       include: {
+        blogs: true,
+        offers: true,
         category: {
           select: {
             id: true,
@@ -261,7 +258,11 @@ export async function getPublicStores(req, res) {
     const stores = await prisma.store.findMany({
       where: query,
       limit: query.limit,
-      include: {
+      select: {
+        id: true,
+        storeName: true,
+        slug: true,
+        image: true,
         category: {
           select: {
             id: true,
