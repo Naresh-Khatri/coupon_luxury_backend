@@ -1,16 +1,20 @@
-import streamifier from "streamifier";
-import blogModel from "../models/BlogModel.js";
-import storeModel from "../models/storeModel.js";
-
-import cloudinary from "../config/cloudinaryConfig.js";
 import imageKit from "../config/imagekitConfig.js";
 import { removeImgFromImageKit } from "../config/imagekitConfig.js";
 
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
+import serializer from "../utils/serializer.js";
+
 export async function getPublicBlogs(req, res) {
   try {
-    const allBlogs = await blogModel
-      .find({ active: true })
-      .sort({ createdAt: -1 });
+    const allBlogs = await prisma.blog.findMany({
+      where: {
+        active: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
     res.send(allBlogs);
   } catch (err) {
     console.log(err);
@@ -19,7 +23,11 @@ export async function getPublicBlogs(req, res) {
 
 export async function getAllBlogs(req, res) {
   try {
-    const allBlogs = await blogModel.find({}).sort({ createdAt: -1 });
+    const allBlogs = await prisma.blog.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
     res.send(allBlogs);
   } catch (err) {
     console.log(err);
@@ -29,8 +37,11 @@ export async function getAllBlogs(req, res) {
 export async function getBlog(req, res) {
   try {
     // console.log(req.params.blogId);
-    //do a case insensitive search
-    const blog = await blogModel.findById(req.params.blogModel);
+    const blog = await prisma.blog.findUnique({
+      where: {
+        id: parseInt(req.params.blogId),
+      },
+    });
     res.send(blog);
   } catch (err) {
     console.log(err);
@@ -38,8 +49,11 @@ export async function getBlog(req, res) {
 }
 export async function getBlogWithSlug(req, res) {
   try {
-    //do a case insensitive search
-    const blog = await blogModel.findOne({ slug: req.params.blogSlug });
+    const blog = await prisma.blog.findUnique({
+      where: {
+        slug: req.params.blogSlug,
+      },
+    });
     res.send(blog);
   } catch (err) {
     console.log(err);
@@ -48,9 +62,13 @@ export async function getBlogWithSlug(req, res) {
 
 export async function createBlog(req, res) {
   try {
-    // console.log(req.body);
+    console.log(req.body);
     //check if present already
-    const blogExist = await blogModel.findOne({ slug: req.body.slug });
+    const blogExist = await prisma.blog.findUnique({
+      where: {
+        slug: req.body.slug,
+      },
+    });
     if (blogExist) {
       return res.status(409).json({
         message: "blog already exists",
@@ -71,45 +89,36 @@ export async function createBlog(req, res) {
     const results = await Promise.all(promises);
     // console.log(results);
     //create new blog
-    const newBlog = await blogModel({
+    const data = serializer({
       ...req.body,
+      uid: req.user.uid,
       coverImg: results[0].url,
       thumbnailImg: results[1].url,
-      type: req.body.blogType,
-      store: req.body.blogType == "store" ? req.body.storeId : null,
-      uid: req.user.uid,
     });
-
-    newBlog.save((err, savedBlog) => {
-      if (err) {
-        console.log(err);
-        if (err.code === 11000) {
-          return res.status(409).json({
-            message: "Slug already exists",
-          });
-        }
-        return res.status(400).send("Invalid Request");
-      }
-      //blog saved now add it to store model if storeId provided
-      if (req.body.storeId) {
-        storeModel.updateOne(
-          { _id: req.body.storeId },
-          { $push: { blogs: savedBlog } },
-          (err, savedStore) => {
-            if (err) {
-              console.log(err);
-              return res.status(400).send("Invalid Request");
-            }
-          }
-        );
-        res.json(savedBlog);
-      } else {
-        res.json(savedBlog);
-      }
+    const newBlog = await prisma.blog.create({
+      data,
     });
+    //blog saved now add it to store model if storeId provided
+    if (req.body.storeId) {
+      const updatedStore = await prisma.store.update({
+        where: {
+          id: parseInt(req.body.storeId),
+        },
+        data: {
+          blogs: {
+            connect: {
+              id: newBlog.id,
+            },
+          },
+        },
+      });
+    }
+    res.json(newBlog);
   } catch (err) {
     console.log(err);
-    res.status(400).send("Invalid Request");
+    if (err.code === "P2002")
+      res.status(400).json({ err: "slug already exists", code: err.code });
+    else res.status(400).send("Invalid Request");
   }
 }
 
@@ -131,67 +140,74 @@ export async function updateBlog(req, res) {
       ];
       const results = await Promise.all(promises);
       //update blog
-
-      const updatedBlog = await blogModel.findByIdAndUpdate(
-        req.params.blogId,
-        {
-          ...req.body,
-          coverImg: results[0].url,
-          thumbnailImg: results[1].url,
-          type: req.body.blogType,
-          store: req.body.blogType == "store" ? req.body.storeId : null,
-          uid: req.user.uid,
+      //TODO: check if double fetch is required
+      const oldBlog = await prisma.blog.findUnique({
+        where: {
+          id: parseInt(req.params.blogId),
         },
-        { new: false }
-      );
+      });
+      const data = serializer({
+        ...req.body,
+        coverImg: results[0].url,
+        thumbnailImg: results[1].url,
+        uid: req.user.uid,
+      });
+      const updatedBlog = await prisma.blog.update({
+        where: {
+          id: parseInt(req.params.blogId),
+        },
+        data,
+      });
       //delete coverImg and thumbnailImg from imageKit
       const oldCoverImg =
-        updatedBlog.coverImg.split("/")[
-          updatedBlog.coverImg.split("/").length - 1
-        ];
+        oldBlog.coverImg.split("/")[oldBlog.coverImg.split("/").length - 1];
       const oldThumbnaiImg =
-        updatedBlog.thumbnailImg.split("/")[
-          updatedBlog.thumbnailImg.split("/").length - 1
+        oldBlog.thumbnailImg.split("/")[
+          oldBlog.thumbnailImg.split("/").length - 1
         ];
       removeImgFromImageKit(oldCoverImg);
       removeImgFromImageKit(oldThumbnaiImg);
       res.json(updatedBlog);
     } else {
       //update blog
-      const updatedBlog = await blogModel.findByIdAndUpdate(
-        req.params.blogId,
-        { ...req.body, uid: req.user.uid },
-        { new: true }
-      );
+      const data = serializer(req.body);
+      const updatedBlog = await prisma.blog.update({
+        where: {
+          id: parseInt(req.params.blogId),
+        },
+        data,
+      });
       res.json(updatedBlog);
     }
   } catch (err) {
     console.log(err);
-    if (err.code === 11000) {
-      return res.status(409).json({
-        message: "blog already exists",
-      });
-    }
-    return res.status(400).send("Invalid Request");
+    if (err.code === "P2002")
+      res.status(400).json({ err: "slug already exists", code: err.code });
+    else res.status(400).send("Invalid Request");
   }
 }
 
 export async function deleteBlog(req, res) {
   try {
-    const deletedBlog = await blogModel.findByIdAndRemove(req.params.blogId);
-
+    const deletedBlog = await prisma.blog.delete({
+      where: {
+        id: parseInt(req.params.blogId),
+      },
+    });
     //delete blog from store model
-    if (deletedBlog.type === "store") {
-      storeModel.updateOne(
-        { _id: deletedBlog.store },
-        { $pull: { blogs: deletedBlog._id } },
-        (err, savedStore) => {
-          if (err) {
-            console.log(err);
-            return res.status(400).send("Invalid Request");
-          }
-        }
-      );
+    if (deletedBlog.blogType === "store") {
+      await prisma.store.update({
+        where: {
+          id: parseInt(deletedBlog.storeId),
+        },
+        data: {
+          blogs: {
+            disconnect: {
+              id: deletedBlog.id,
+            },
+          },
+        },
+      });
     }
     //delete coverImg and thumbnailImg from imageKit
     const oldCoverImg =
