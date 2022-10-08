@@ -1,4 +1,6 @@
 import imageKit from "../config/imagekitConfig.js";
+import { removeImgFromImageKit } from "../config/imagekitConfig.js";
+
 
 import serializer from "../utils/serializer.js";
 import { PrismaClient } from "@prisma/client";
@@ -20,7 +22,7 @@ export async function getPublicCategories(req, res) {
     //   .find({ active: true })
     // .sort({ categoryName: 1 });
 
-    res.send(allCategories);
+    // res.send(allCategories);
   } catch (err) {
     console.log(err);
   }
@@ -166,7 +168,11 @@ export async function createCategory(req, res) {
     });
   } catch (err) {
     console.log(err);
-    res.status(400).send("Invalid Request");
+    if (err.code === "P2002")
+      res
+        .status(400)
+        .json({ err: "slug already exists", code: err.code });
+    else res.status(400).send("Invalid Request");
   }
 }
 
@@ -210,7 +216,7 @@ export async function updateCategory(req, res) {
       const oldImageName =
         oldImage.image.split("/")[oldImage.image.split("/").length - 1];
       //remove the old image from imageKit
-      await removeImgFromImageKit(oldImageName);
+      removeImgFromImageKit(oldImageName);
       res.json(updatedCategory);
     } else {
       const data = serializer(req.body);
@@ -224,7 +230,9 @@ export async function updateCategory(req, res) {
     }
   } catch (err) {
     console.log(err);
-    res.status(400).send("Invalid Request");
+    if (err.code === "P2002")
+      res.status(400).json({ err: "slug already exists", code: err.code });
+    else res.status(400).send("Invalid Request");
   }
 }
 export async function getAutoCompleteData(req, res) {
@@ -278,17 +286,3 @@ export async function deleteCategory(req, res) {
   }
 }
 
-const removeImgFromImageKit = (imageName) => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      //find the image in imageKit
-      const images = await imageKit.listFiles({ name: imageName });
-      //if there is an image, delete it
-      if (images.length > 0) await imageKit.deleteFile(images[0].fileId);
-      resolve();
-    } catch (err) {
-      console.log(err);
-      reject();
-    }
-  });
-};
