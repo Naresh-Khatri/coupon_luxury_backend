@@ -2,10 +2,8 @@ import express from "express";
 import { SitemapStream, streamToPromise } from "sitemap";
 import { createGzip } from "zlib";
 
-import BlogModel from "../models/BlogModel.js";
-import OfferModel from "../models/offerModel.js";
-import storeModel from "../models/storeModel.js";
-import CategoryModel from "../models/categoryModel.js";
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
 
 const Router = express.Router();
 
@@ -66,76 +64,103 @@ Router.get("/", async (req, res) => {
 });
 export default Router;
 
-const getSlugs = (type) => {
+const getSlugs = async (type) => {
   switch (type) {
     case "offers":
-      return new Promise((resolve, reject) => {
-        OfferModel.find({ active: true })
-          .select("slug updatedAt -_id")
-          .then((offers) => {
-            const offersSitemap = offers.map((offer) => {
-              return {
-                url: "https://www.couponluxury.com/deal/" + offer.slug,
-                lastmod: offer.updatedAt,
-                changefreq: "daily",
-                priority: 0.8,
-              };
-            });
-            resolve(offersSitemap);
-          });
+      const offers = await prisma.offer.findMany({
+        where: {
+          active: true,
+        },
+        orderBy: {
+          title: "asc",
+        },
+        select: {
+          id: false,
+          slug: true,
+          updatedAt: true,
+        },
+      });
+      const offersSitemap = offers.map((offer) => {
+        return {
+          url: "https://www.couponluxury.com/deal/" + offer.slug,
+          lastmod: offer.updatedAt,
+          changefreq: "daily",
+          priority: 0.8,
+        };
+      });
+      return offersSitemap;
+    case "blogs":
+      const blogs = await prisma.blog.findMany({
+        where: {
+          active: true,
+        },
+        orderBy: {
+          title: "asc",
+        },
+        select: {
+          id: false,
+          slug: true,
+          updatedAt: true,
+        },
+      });
+      const blogsSitemap = blogs.map((blog) => {
+        return {
+          url: "https://www.couponluxury.com/blog/" + blog.slug,
+          lastmod: blog.updatedAt,
+          changefreq: "daily",
+          priority: 0.8,
+        };
       });
 
-    case "blogs":
-      return new Promise((resolve, reject) => {
-        BlogModel.find({ active: true })
-          .select("slug updatedAt -_id")
-          .then((blogs) => {
-            const blogsSitemap = blogs.map((blog) => {
-              return {
-                url: "https://www.couponluxury.com/blogs/" + blog.slug,
-                lastmod: blog.updatedAt,
-                changefreq: "daily",
-                priority: 0.8,
-              };
-            });
-            resolve(blogsSitemap);
-          });
-      });
+      return blogsSitemap;
 
     case "categories":
-      return new Promise((resolve, reject) => {
-        CategoryModel.find({ active: true })
-          .select("slug updatedAt -_id")
-          .then((categories) => {
-            const categoriesSitemap = categories.map((category) => {
-              return {
-                url: "https://www.couponluxury.com/categories/" + category.slug,
-                lastmod: category.updatedAt,
-                changefreq: "weekly",
-                priority: 0.8,
-              };
-            });
-            resolve(categoriesSitemap);
-          });
+      const categories = await prisma.category.findMany({
+        where: {
+          active: true,
+        },
+        orderBy: {
+          categoryName: "asc",
+        },
+        select: {
+          id: false,
+          slug: true,
+          updatedAt: true,
+        },
       });
+      const categoriesSitemap = categories.map((category) => {
+        return {
+          url: "https://www.couponluxury.com/category/" + category.slug,
+          lastmod: category.updatedAt,
+          changefreq: "daily",
+          priority: 0.8,
+        };
+      });
+      return categoriesSitemap;
 
     case "stores":
-      return new Promise((resolve, reject) => {
-        storeModel
-          .find({ active: true })
-          .select("slug updatedAt -_id")
-          .then((stores) => {
-            const storesSitemap = stores.map((store) => {
-              return {
-                url: "https://www.couponluxury.com/stores/" + store.slug,
-                lastmod: store.updatedAt,
-                changefreq: "daily",
-                priority: 0.8,
-              };
-            });
-            resolve(storesSitemap);
-          });
+      const stores = await prisma.store.findMany({
+        where: {
+          active: true,
+        },
+        orderBy: {
+          storeName: "asc",
+        },
+        select: {
+          id: false,
+          slug: true,
+          updatedAt: true,
+        },
       });
+      const storesSitemap = stores.map((store) => {
+        return {
+          url: "https://www.couponluxury.com/store/" + store.slug,
+          lastmod: store.updatedAt,
+          changefreq: "daily",
+          priority: 0.8,
+        };
+      });
+      return storesSitemap;
 
     default:
       return [];
