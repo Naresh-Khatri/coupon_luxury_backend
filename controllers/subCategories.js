@@ -114,6 +114,9 @@ export async function updateSubCategory(req, res) {
     res.json(updatedsubCategory);
   } catch (err) {
     console.log(err);
+    if (err.code === "P2002")
+      res.status(400).json({ err: "slug already exists", code: err.code });
+    else res.status(400).send("Invalid Request");
     return res.status(400).send("Invalid Request");
   }
 }
