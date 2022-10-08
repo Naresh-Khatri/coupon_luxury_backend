@@ -51,6 +51,7 @@ export async function getPublicOffers(req, res) {
             slug: true,
             storeURL: true,
             active: true,
+            offers: { select: { id: true } },
             categoryId: true,
             subCategoryId: true,
             featured: true,
