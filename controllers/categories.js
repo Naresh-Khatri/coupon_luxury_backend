@@ -1,7 +1,6 @@
 import imageKit from "../config/imagekitConfig.js";
 import { removeImgFromImageKit } from "../config/imagekitConfig.js";
 
-
 import serializer from "../utils/serializer.js";
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
@@ -12,6 +11,23 @@ export async function getPublicCategories(req, res) {
       where: {
         active: true,
       },
+      include: {
+        offers: {
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+          },
+        },
+        subCategories: {
+          select: {
+            id: true,
+            subCategoryName: true,
+            slug: true,
+          },
+        },
+      },
+
       orderBy: {
         categoryName: "asc",
       },
@@ -107,20 +123,6 @@ export async function getCategoryWithSlug(req, res) {
       },
     });
     res.send(category);
-
-    // const category = await categoryModel
-    //   .findOne({
-    //     slug: req.params.categorySlug,
-    //   })
-    //   .populate({
-    //     path: "offers",
-    //     populate: {
-    //       path: "store",
-    //       select: "_id image storeName storeURL slug",
-    //     },
-    //   })
-    //   .sort({ categorySlug: -1 });
-    // res.send(category);
   } catch (err) {
     console.log(err);
   }
@@ -128,12 +130,6 @@ export async function getCategoryWithSlug(req, res) {
 
 export async function createCategory(req, res) {
   try {
-    // console.log(req.body);
-    // console.log(req.files);
-    // return res.status(200).json({
-    //   message: "Category created successfully",
-    // });
-
     const categoryExists = await prisma.category.findUnique({
       where: {
         slug: req.body.slug,
@@ -169,9 +165,7 @@ export async function createCategory(req, res) {
   } catch (err) {
     console.log(err);
     if (err.code === "P2002")
-      res
-        .status(400)
-        .json({ err: "slug already exists", code: err.code });
+      res.status(400).json({ err: "slug already exists", code: err.code });
     else res.status(400).send("Invalid Request");
   }
 }
@@ -285,4 +279,3 @@ export async function deleteCategory(req, res) {
     console.log(err);
   }
 }
-
