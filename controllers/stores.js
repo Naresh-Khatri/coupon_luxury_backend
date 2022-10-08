@@ -1,61 +1,50 @@
-import streamifier from "streamifier";
-import storeModel from "../models/storeModel.js";
-import categoryModel from "../models/categoryModel.js";
-import subCategoryModel from "../models/subCategoryModel.js";
-
-import cloudinary from "../config/cloudinaryConfig.js";
 import imageKit from "../config/imagekitConfig.js";
 import { removeImgFromImageKit } from "../config/imagekitConfig.js";
+
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
+import serializer from "../utils/serializer.js";
 
 export async function createStore(req, res) {
   try {
     console.log(req.body);
-    // console.log(req.files);
-
-    // return res.status(200).json({
-    //   message: "Category created successfully",
-    //   data: res,
-    // });
     //check if title already exists
-    const storeExists = await storeModel.findOne({
-      slug: req.body.slug,
+    const storeExists = await prisma.store.findUnique({
+      where: {
+        slug: req.body.slug,
+      },
     });
-    if (storeExists) {
-      return res.status(409).send("store already exists");
-    } else {
-      //create new category
+    if (storeExists) return res.status(409).send("store already exists");
 
-      //upload buffer to imageKit
-      const result = await imageKit.upload({
-        file: req.files.image.data,
-        fileName: req.body.slug,
-        extensions: [
-          {
-            name: "google-auto-tagging",
-            maxTags: 5,
-            minConfidence: 95,
-          },
-        ],
-      });
-      console.log(result);
-      //TODO: are category and subCategory required?
-      const newStore = await storeModel({
-        ...req.body,
-        uid: req.user.uid,
-        image: result.url,
-      });
-      newStore.save((err, result) => {
-        if (err) {
-          console.log(err);
-          return res.status(400).send("Invalid Request");
-        }
-        res.json(result);
-      });
-      // res.json("noice");
-    }
+    //create new category
+    //upload buffer to imageKit
+    const result = await imageKit.upload({
+      file: req.files.image.data,
+      fileName: req.body.slug,
+      extensions: [
+        {
+          name: "google-auto-tagging",
+          maxTags: 5,
+          minConfidence: 95,
+        },
+      ],
+    });
+    console.log(result);
+    //TODO: are category and subCategory required?
+    const data = serializer({
+      ...req.body,
+      uid: req.user.uid,
+      image: result.url,
+    });
+    const newStore = await prisma.store.create({ data });
+    res.json(newStore);
   } catch (err) {
     console.log(err);
-    res.status(400).send("Invalid Request");
+    if (err.code === "P2002")
+      res
+        .status(400)
+        .json({ err: "slug already exists", code: err.code });
+    else res.status(400).send("Invalid Request");
   }
 }
 export async function updateStore(req, res) {
@@ -76,47 +65,72 @@ export async function updateStore(req, res) {
           },
         ],
       });
-      const updatedStore = await storeModel.findByIdAndUpdate(
-        req.params.storeId,
-        { ...req.body, image: result.url },
-        { new: false }
-      );
+      //TODO: check if double fetch is required
+      const oldStore = await prisma.store.findUnique({
+        where: {
+          id: parseInt(req.params.storeId),
+        },
+      });
+      const data = serializer({
+        ...req.body,
+        image: result.url,
+      });
+      const updatedStore = await prisma.store.update({
+        where: {
+          id: parseInt(req.params.storeId),
+        },
+        data,
+      });
       //now remove the old image from imageKit
       //grab the old image from the db
       const oldImageName =
-        updatedStore.image.split("/")[updatedStore.image.split("/").length - 1];
+        oldStore.image.split("/")[oldStore.image.split("/").length - 1];
       //remove the old image from imageKit
-      await removeImgFromImageKit(oldImageName);
+      removeImgFromImageKit(oldImageName);
       res.json(updatedStore);
     } else {
-      const updatedStore = await storeModel.findByIdAndUpdate(
-        req.params.storeId,
-        req.body,
-        { new: true }
-      );
-      // console.log(req.body.category);
-      // console.log(updatedStore.category);
-      // console.log("updated record", updatedStore);
+      const data = serializer(req.body);
+      const updatedStore = await prisma.store.update({
+        where: {
+          id: parseInt(req.params.storeId),
+        },
+        data,
+      });
       res.json(updatedStore);
     }
   } catch (err) {
     console.log(err);
-    if (err.code === 11000) {
-      return res.status(409).json({
-        message: "store already exists",
-      });
-    }
-    return res.status(400).send("Invalid Request");
+    if (err.code === "P2002")
+      res.status(400).json({ err: "slug already exists", code: err.code });
+    else res.status(400).send("Invalid Request");
   }
 }
 export async function getStore(req, res) {
   try {
-    //do a case insensitive search
-    const store = await storeModel
-      .findById(req.params.storeId)
-      .populate("category", "categoryName categorySlug _id ")
-      .populate("subCategory", "subCategoryName subCategorySlug _id ")
-      .sort({ storeName: -1 });
+    const store = await prisma.store.findUnique({
+      where: {
+        id: parseInt(req.params.storeId),
+      },
+      orderBy: {
+        storeName: "asc",
+      },
+      include: {
+        category: {
+          select: {
+            id: true,
+            categoryName: true,
+            slug: true,
+          },
+        },
+        subCategory: {
+          select: {
+            id: true,
+            subCategoryName: true,
+            slug: true,
+          },
+        },
+      },
+    });
     res.send(store);
   } catch (err) {
     console.log(err);
@@ -125,14 +139,23 @@ export async function getStore(req, res) {
 export async function getStoresWithName(req, res) {
   try {
     //do a case insensitive search
-    const stores = await storeModel
-      .find({
-        storeName: { $regex: `${req.params.storeName}`, $options: "i" },
-      })
-      .select("storeName slug image _id");
-    // .populate("category", "categoryName categorySlug _id ")
-    // .populate("subCategory", "subCategoryName subCategorySlug _id ")
-    // .populate("offers");
+    const stores = await prisma.store.findMany({
+      select: {
+        id: true,
+        storeName: true,
+        slug: true,
+        image: true,
+      },
+      where: {
+        storeName: {
+          contains: req.params.storeName,
+          mode: "insensitive",
+        },
+      },
+      orderBy: {
+        storeName: "asc",
+      },
+    });
     res.send(stores);
   } catch (err) {
     console.log(err);
@@ -142,13 +165,32 @@ export async function getStoreWithSlug(req, res) {
   try {
     // console.log(req.params.storeSlug);
     // do a case insensitive search
-    const store = await storeModel
-      .findOne({
-        slug: { $regex: `^${req.params.storeSlug}$`, $options: "i" },
-      })
-      .populate("category", "categoryName categorySlug _id ")
-      .populate("subCategory", "subCategoryName subCategorySlug _id ")
-      .populate({ path: "offers", match: { active: true } });
+    const store = await prisma.store.findFirst({
+      where: {
+        slug: req.params.storeSlug,
+      },
+      include: {
+        category: {
+          select: {
+            id: true,
+            categoryName: true,
+            slug: true,
+          },
+        },
+        subCategory: {
+          select: {
+            id: true,
+            subCategoryName: true,
+            slug: true,
+          },
+        },
+        offers: {
+          where: {
+            active: true,
+          },
+        },
+      },
+    });
     res.send(store);
   } catch (err) {
     console.log(err);
@@ -157,15 +199,24 @@ export async function getStoreWithSlug(req, res) {
 export async function getAutoCompleteData(req, res) {
   try {
     const { searchText } = req.body;
-    const regex = new RegExp(searchText);
-    console.log(req.body);
     //do a case insensitive search
-    const store = await storeModel
-      .find({
-        storeName: { $regex: regex, $options: "is" },
-      })
-      .select("storeName slug -_id");
-    console.log(store);
+    const store = await prisma.store.findMany({
+      where: {
+        storeName: {
+          contains: searchText,
+          mode: "insensitive",
+        },
+      },
+      select: {
+        id: true,
+        storeName: true,
+        slug: true,
+        image: true,
+      },
+      orderBy: {
+        storeName: "asc",
+      },
+    });
     res.send(store);
   } catch (err) {
     console.log(err);
@@ -173,11 +224,27 @@ export async function getAutoCompleteData(req, res) {
 }
 export async function getAllStores(req, res) {
   try {
-    const allStores = await storeModel
-      .find({})
-      .populate("category", "categoryName categorySlug _id ")
-      .populate("subCategory", "subCategoryName subCategorySlug _id ")
-      .sort({ title: -1 });
+    const allStores = await prisma.store.findMany({
+      include: {
+        category: {
+          select: {
+            id: true,
+            categoryName: true,
+            slug: true,
+          },
+        },
+        subCategory: {
+          select: {
+            id: true,
+            subCategoryName: true,
+            slug: true,
+          },
+        },
+      },
+      orderBy: {
+        storeName: "asc",
+      },
+    });
     res.send(allStores);
   } catch (err) {
     console.log(err);
@@ -189,24 +256,45 @@ export async function getPublicStores(req, res) {
     if (req.query.featured) query.featured = true;
     if (req.query.category) query.category = req.query.category;
     if (req.query.offerType) query.offerType = req.query.offerType;
-    if (req.query.limit) query.limit = req.query.limit;
+    // if (req.query.limit) query.limit = req.query.limit;
 
-    let allStores = await storeModel
-      .find(query)
-      .limit(req.query.limit)
-      .select("storeName slug image _id")
-      .populate("category", "categoryName categorySlug _id ")
-      .populate("subCategory", "subCategoryName subCategorySlug _id ")
-      .sort({ title: -1 });
-    res.send(allStores);
+    const stores = await prisma.store.findMany({
+      where: query,
+      limit: query.limit,
+      include: {
+        category: {
+          select: {
+            id: true,
+            categoryName: true,
+            slug: true,
+          },
+        },
+        subCategory: {
+          select: {
+            id: true,
+            subCategoryName: true,
+            slug: true,
+          },
+        },
+      },
+      orderBy: {
+        storeName: "asc",
+      },
+    });
+    res.send(stores);
   } catch (err) {
     console.log(err);
   }
 }
 export async function deleteStore(req, res) {
+  //TODO: add a logic to remove stores image too
   try {
     console.log(req.body);
-    const deletedStore = await storeModel.findByIdAndRemove(req.params.storeId);
+    const deletedStore = await prisma.store.delete({
+      where: {
+        id: parseInt(req.params.storeId),
+      },
+    });
     res.json(deletedStore);
   } catch (err) {
     console.log(err);
