@@ -1,17 +1,13 @@
-import slideModel from "../models/slideModel.js";
 import imageKit from "../config/imagekitConfig.js";
 import { removeImgFromImageKit } from "../config/imagekitConfig.js";
+
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
+import serializer from "../utils/serializer.js";
 
 export async function createSlide(req, res) {
   try {
     console.log(req.body);
-    // console.log(req.files);
-
-    // return res.status(200).json({
-    //   message: "Category created successfully",
-    //   data: res,
-    // });
-
     const result = await imageKit.upload({
       file: req.files.imgURL.data,
       fileName: "slide-" + req.body.title,
@@ -25,18 +21,15 @@ export async function createSlide(req, res) {
     });
     console.log(result);
 
-    const newSlide = await slideModel({
+    const data = serializer({
       ...req.body,
-      uid: req.user.uid,
       imgURL: result.url,
+      uid: req.user.uid,
     });
-    newSlide.save((err, result) => {
-      if (err) {
-        console.log(err);
-        return res.status(400).send("Invalid Request");
-      }
-      res.json(result);
+    const newSlide = await prisma.slide.create({
+      data,
     });
+    res.json(newSlide);
   } catch (err) {
     console.log(err);
     res.status(400).send("Invalid Request");
@@ -60,32 +53,41 @@ export async function updateSlide(req, res) {
           },
         ],
       });
+
+      const oldImage = await prisma.slide.findUnique({
+        where: {
+          id: parseInt(req.params.slideId),
+        },
+      });
       // console.log(result);
-      const updatedSlide = await slideModel.findByIdAndUpdate(
-        req.params.slideId,
-        { ...req.body, imgURL: result.url },
-        { new: false }
-      );
+      const data = serializer({
+        ...req.body,
+        imgURL: result.url,
+      });
+      const updatedSlide = await prisma.slide.update({
+        where: {
+          id: parseInt(req.params.slideId),
+        },
+        data,
+      });
+
       console.log(updatedSlide);
       //now remove the old image from imageKit
       //grab the old image from the db
       const oldImageName =
-        updatedSlide.imgURL.split("/")[
-          updatedSlide.imgURL.split("/").length - 1
-        ];
+        oldImage.imgURL.split("/")[oldImage.imgURL.split("/").length - 1];
       //remove the old image from imageKit
-      await removeImgFromImageKit(oldImageName);
+      removeImgFromImageKit(oldImageName);
       res.json(updatedSlide);
     } else {
       console.log("no image provided");
-      const updatedSlide = await slideModel.findByIdAndUpdate(
-        req.params.slideId,
-        req.body,
-        { new: true }
-      );
-      // console.log(req.body.category);
-      // console.log(updatedSlide.category);
-      // console.log("updated record", updatedSlide);
+      const data = serializer(req.body);
+      const updatedSlide = await prisma.slide.update({
+        where: {
+          id: parseInt(req.params.slideId),
+        },
+        data,
+      });
       res.json(updatedSlide);
     }
   } catch (err) {
@@ -95,9 +97,20 @@ export async function updateSlide(req, res) {
 
 export async function getPublicSlides(req, res) {
   try {
-    //do a case insensitive search
-    const slides = await slideModel.find({active:true}).sort({ order: -1 })
-    .select("-uid -__v -createdAt -updatedAt -_id -active");
+    const slides = await prisma.slide.findMany({
+      where: {
+        active: true,
+      },
+      select: {
+        id: true,
+        title: true,
+        imgURL: true,
+        active: true,
+      },
+      orderBy: {
+        order: "asc",
+      },
+    });
     res.send(slides);
   } catch (err) {
     console.log(err);
@@ -106,8 +119,11 @@ export async function getPublicSlides(req, res) {
 
 export async function getAllSlides(req, res) {
   try {
-    //do a case insensitive search
-    const slides = await slideModel.find().sort({ order: -1 });
+    const slides = await prisma.slide.findMany({
+      orderBy: {
+        order: "asc",
+      },
+    });
     res.send(slides);
   } catch (err) {
     console.log(err);
@@ -116,9 +132,12 @@ export async function getAllSlides(req, res) {
 
 export async function getSlide(req, res) {
   try {
-    //do a case insensitive search
-    const slides = await slideModel.findById(req.params.slideId);
-    res.send(slides);
+    const slide = await prisma.slide.findUnique({
+      where: {
+        id: parseInt(req.params.slideId),
+      },
+    });
+    res.send(slide);
   } catch (err) {
     console.log(err);
   }
@@ -126,13 +145,20 @@ export async function getSlide(req, res) {
 export async function deleteSlide(req, res) {
   try {
     console.log(req.body);
-    const deletedSlide = await slideModel.findByIdAndRemove(req.params.slideId);
+    //TODO: check if double fetch necessary
+    const deletedSlide = await prisma.slide.delete({
+      where: {
+        id: parseInt(req.params.slideId),
+      },
+    });
+
     //now remove the old image from imageKit
     //grab the old image from the db
     const oldImageName =
       deletedSlide.imgURL.split("/")[deletedSlide.imgURL.split("/").length - 1];
+    console.log("trying to delete the following image", deletedSlide);
     //remove the old image from imageKit
-    await removeImgFromImageKit(oldImageName);
+    removeImgFromImageKit(oldImageName);
     res.json(deletedSlide);
   } catch (err) {
     console.log(err);
