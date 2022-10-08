@@ -13,7 +13,8 @@ datasource db {
 model Blog {
   id               Int     @id @default(autoincrement())
   title            String
-  storeId          Int
+  blogType         String? @default("normal")
+  storeId          Int?
   store            Store?  @relation(fields: [storeId], references: [id], onDelete: Cascade)
   slug             String  @unique
   imgAlt           String?
@@ -57,13 +58,14 @@ model Store {
   metaTitle       String?
   metaDescription String?
   metaKeywords    String?
-  metaSchema      String?
+  // metaSchema      String?
 }
 
 model Offer {
   id            Int         @id @default(autoincrement())
   uid           String
   slug          String      @unique
+  country       String
   categoryId    Int
   category      Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   subCategoryId Int
@@ -77,10 +79,10 @@ model Offer {
   affURL        String
   offerType     String
   discountType  String
-  discountValue String
-  couopnCode    String?     @default("")
-  startDate     DateTime
-  endDate       DateTime
+  discountValue Int
+  couponCode    String?     @default("")
+  startDate     String
+  endDate       String
 
   active    Boolean  @default(false)
   featured  Boolean  @default(false)
@@ -114,7 +116,7 @@ model Category {
   metaDescription String?
   metaKeywords    String?
   metaSchema      String?
-  Store           Store[]
+  stores          Store[]
 }
 
 model Slide {
@@ -123,7 +125,7 @@ model Slide {
   title  String
   order  Int
   link   String
-  image  String
+  imgURL  String
   imgAlt String
 
   active    Boolean  @default(false)
@@ -151,8 +153,8 @@ model SubCategory {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  Store Store[]
-  Offer Offer[]
+  stores Store[]
+  offers Offer[]
 }
 
 model Subscriber {

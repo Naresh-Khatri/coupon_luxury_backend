@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Blog" ALTER COLUMN "storeId" DROP NOT NULL;
