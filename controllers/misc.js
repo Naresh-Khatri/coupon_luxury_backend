@@ -6,20 +6,17 @@ export async function getSitemap(req, res) {
     where: {
       active: true,
     },
-    // select: {
-    //   image: true,
-    //   categoryName: true,
-    //   slug: true,
-    //   subCategories: true,
-    //   description: true,
-    // },
-    include: {
+    select: {
+      image: true,
+      categoryName: true,
+      slug: true,
       subCategories: {
         select: {
           subCategoryName: true,
           slug: true,
         },
       },
+      description: true,
     },
   });
   res.json(categories);
