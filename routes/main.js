@@ -1,40 +1,89 @@
 import express from "express";
-
-import storeModel from "../models/storeModel.js";
-import categoryModel from "../models/categoryModel.js";
-import slideModel from "../models/slideModel.js";
-import offerModel from "../models/offerModel.js";
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
 
 const Router = express.Router();
 
 Router.get("/", async (req, res) => {
   const promises = [
-    storeModel
-      .find({ active: true, featured: true })
-      .sort({ createdAt: -1 })
-      .limit(10)
-      .select("storeName slug image _id")
-      .populate("category", "categoryName categorySlug _id ")
-      .populate("subCategory", "subCategoryName subCategorySlug _id ")
-      .sort({ title: -1 }),
-    categoryModel
-      .find({ active: true })
-      .select(
-        "-subCategories -description -createdAt -updatedAt -__v -active -metaTitle -metaDescription -metaKeywords"
-      )
-      .sort({ categoryName: 1 }),
-    slideModel
-      .find({ active: true })
-      .sort({ order: -1 })
-      .select("-uid -__v -createdAt -updatedAt -_id -active"),
-    offerModel
-      .find({ active: true, featured: true })
-      .limit(10)
-      .select(
-        "offerName slug image _id category title URL affURL couponCode discountType discountValue"
-      )
-      .populate("store", "storeName slug image _id")
-      .sort({ updatedAt: -1 }),
+    prisma.store.findMany({
+      where: { active: true, featured: true },
+      orderBy: { updatedAt: "desc" },
+      select: {
+        id: true,
+        storeName: true,
+        slug: true,
+        storeURL: true,
+        image: true,
+
+        category: {
+          select: {
+            id: true,
+            categoryName: true,
+            slug: true,
+          },
+        },
+        subCategory: {
+          select: {
+            id: true,
+            subCategoryName: true,
+            slug: true,
+          },
+        },
+      },
+    }),
+    prisma.category.findMany({
+      where: { active: true },
+      select: {
+        id: true,
+        categoryName: true,
+        slug: true,
+        image: true,
+        imgAlt: true,
+        featured: true,
+        offers: {
+          select: {
+            id: true,
+          },
+        },
+      },
+      orderBy: { categoryName: "asc" },
+    }),
+    prisma.slide.findMany({
+      where: { active: true },
+      select: {
+        id: true,
+        title: true,
+        imgURL: true,
+        imgAlt: true,
+        link: true,
+        order: true,
+      },
+      orderBy: { order: "asc" },
+    }),
+    prisma.offer.findMany({
+      where: { active: true, featured: true },
+      select: {
+        id: true,
+        slug: true,
+        title: true,
+        URL: true,
+        affURL: true,
+        discountType: true,
+        discountValue: true,
+        couponCode: true,
+        categoryId: true,
+        store: {
+          select: {
+            id: true,
+            image: true,
+            storeName: true,
+            slug: true,
+          },
+        },
+      },
+      orderBy: { updatedAt: "desc" },
+    }),
   ];
   const [featuredStores, categories, slides, featuredOffers] =
     await Promise.all(promises);
