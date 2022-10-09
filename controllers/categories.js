@@ -18,6 +18,9 @@ export async function getPublicCategories(req, res) {
             title: true,
             slug: true,
           },
+          orderBy: {
+            updatedAt: "desc",
+          },
         },
         subCategories: {
           select: {
@@ -57,6 +60,7 @@ export async function getAllCategories(req, res) {
     res.send(allCategories);
   } catch (err) {
     console.log(err);
+    res.status(400).send(err);
   }
 }
 
@@ -74,6 +78,7 @@ export async function getCategory(req, res) {
     // res.send(category);
   } catch (err) {
     console.log(err);
+    res.status(404).json({ message: "Category not found" });
   }
 }
 export async function getCategoryWithName(req, res) {
@@ -97,6 +102,7 @@ export async function getCategoryWithName(req, res) {
     // res.send(category);
   } catch (err) {
     console.log(err);
+    res.status(404).json({ message: "Category not found" });
   }
 }
 export async function getCategoryWithSlug(req, res) {
@@ -119,12 +125,16 @@ export async function getCategoryWithSlug(req, res) {
               },
             },
           },
+          orderBy: {
+            updatedAt: "desc",
+          },
         },
       },
     });
     res.send(category);
   } catch (err) {
     console.log(err);
+    res.status(404).json({ message: "Category not found" });
   }
 }
 
@@ -248,6 +258,7 @@ export async function getAutoCompleteData(req, res) {
     res.json(categories);
   } catch (err) {
     console.log(err);
+    res.status(400).json({ message: "Invalid Request" });
   }
 }
 export async function getSubCategories(req, res) {
@@ -263,6 +274,7 @@ export async function getSubCategories(req, res) {
     res.send(subCategories);
   } catch (err) {
     console.log(err);
+    res.status(400).json({ message: "Invalid Request" });
   }
 }
 
@@ -277,5 +289,6 @@ export async function deleteCategory(req, res) {
     res.json(deletedCategory);
   } catch (err) {
     console.log(err);
+    res.status(400).json({ message: "Invalid Request" });
   }
 }
