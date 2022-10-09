@@ -28,6 +28,7 @@ export async function getAllOffers(req, res) {
     res.send(allOffers);
   } catch (err) {
     console.log(err);
+    res.status(400).json({ error: "Could find offers" });
   }
 }
 
@@ -36,13 +37,14 @@ export async function getPublicOffers(req, res) {
     // console.log("public:", req.query);
     const query = { active: true };
     if (req.query.featured) query.featured = true;
-    if (req.query.category) query.category = req.query.category;
+    if (req.query.categoryId) query.categoryId = parseInt(req.query.categoryId);
     if (req.query.offerType) query.offerType = req.query.offerType;
+    console.log(query);
     // if (req.query.limit) query.limit = req.query.limit;
 
     const allOffers = await prisma.offer.findMany({
       where: query,
-      limit: query.limit,
+      take: parseInt(req.query.limit) || 50,
       include: {
         store: {
           select: {
@@ -50,6 +52,7 @@ export async function getPublicOffers(req, res) {
             storeName: true,
             slug: true,
             storeURL: true,
+            image: true,
             active: true,
             offers: { select: { id: true } },
             categoryId: true,
@@ -68,6 +71,7 @@ export async function getPublicOffers(req, res) {
     res.send(allOffers);
   } catch (err) {
     console.log(err);
+    res.status(400).send(err);
   }
 }
 
@@ -114,6 +118,7 @@ export async function getOfferWithSlug(req, res) {
             storeName: true,
             slug: true,
             storeURL: true,
+            image: true,
             active: true,
             categoryId: true,
             subCategoryId: true,
@@ -159,6 +164,7 @@ export async function getOffersWithTitle(req, res) {
     res.send(offers);
   } catch (err) {
     console.log(err);
+    res.status(404).json({ err: "offer not found" });
   }
 }
 
@@ -340,5 +346,6 @@ export async function deleteOffer(req, res) {
     res.json(deletedOffer);
   } catch (err) {
     console.log(err);
+    res.status(400).json({ err: "couldnt delete offer" });
   }
 }
