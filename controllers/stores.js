@@ -111,7 +111,11 @@ export async function getStore(req, res) {
       },
       include: {
         blogs: true,
-        offers: true,
+        offers: {
+          orderBy: {
+            updatedAt: "desc",
+          },
+        },
         category: {
           select: {
             id: true,
@@ -185,6 +189,9 @@ export async function getStoreWithSlug(req, res) {
           where: {
             active: true,
           },
+          orderBy: {
+            updatedAt: "desc",
+          },
         },
       },
     });
@@ -254,10 +261,10 @@ export async function getPublicStores(req, res) {
     if (req.query.category) query.category = req.query.category;
     if (req.query.offerType) query.offerType = req.query.offerType;
     // if (req.query.limit) query.limit = req.query.limit;
-
+    console.log(query);
     const stores = await prisma.store.findMany({
       where: query,
-      limit: query.limit,
+      take: parseInt(query.limit) || 50,
       select: {
         id: true,
         storeName: true,
