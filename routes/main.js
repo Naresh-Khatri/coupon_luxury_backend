@@ -62,7 +62,7 @@ Router.get("/", async (req, res) => {
       orderBy: { order: "asc" },
     }),
     prisma.offer.findMany({
-      where: { active: true, featured: true },
+      where: { active: true, featured: true, offerType: "deal" },
       select: {
         id: true,
         slug: true,
