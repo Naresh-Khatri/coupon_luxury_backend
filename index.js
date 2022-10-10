@@ -24,9 +24,6 @@ import uploadRoutes from "./routes/upload.js";
 import mainRoutes from "./routes/main.js";
 
 
-import { PrismaClient } from "@prisma/client";
-export const prisma = new PrismaClient();
-
 const app = express();
 const PORT = process.env.PORT || 3000;
 
