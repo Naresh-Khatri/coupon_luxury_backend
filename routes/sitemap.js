@@ -82,7 +82,7 @@ const getSlugs = async (type) => {
       });
       const offersSitemap = offers.map((offer) => {
         return {
-          url: "https://www.couponluxury.com/deal/" + offer.slug,
+          url: "https://www.couponluxury.com/deals/" + offer.slug,
           lastmod: offer.updatedAt,
           changefreq: "daily",
           priority: 0.8,
@@ -105,7 +105,7 @@ const getSlugs = async (type) => {
       });
       const blogsSitemap = blogs.map((blog) => {
         return {
-          url: "https://www.couponluxury.com/blog/" + blog.slug,
+          url: "https://www.couponluxury.com/blogs/" + blog.slug,
           lastmod: blog.updatedAt,
           changefreq: "daily",
           priority: 0.8,
@@ -130,7 +130,7 @@ const getSlugs = async (type) => {
       });
       const categoriesSitemap = categories.map((category) => {
         return {
-          url: "https://www.couponluxury.com/category/" + category.slug,
+          url: "https://www.couponluxury.com/categories/" + category.slug,
           lastmod: category.updatedAt,
           changefreq: "daily",
           priority: 0.8,
@@ -154,7 +154,7 @@ const getSlugs = async (type) => {
       });
       const storesSitemap = stores.map((store) => {
         return {
-          url: "https://www.couponluxury.com/store/" + store.slug,
+          url: "https://www.couponluxury.com/stores/" + store.slug,
           lastmod: store.updatedAt,
           changefreq: "daily",
           priority: 0.8,
