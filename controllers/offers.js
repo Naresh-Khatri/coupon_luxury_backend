@@ -107,12 +107,9 @@ export async function getOffer(req, res) {
 }
 export async function getOfferWithSlug(req, res) {
   try {
-    const offer = await prisma.offer.findFirst({
+    const offer = await prisma.offer.findUnique({
       where: {
-        slug: {
-          contains: req.params.offerSlug,
-          mode: "insensitive",
-        },
+        slug: req.params.offerSlug.toLowerCase(),
       },
       include: {
         store: {
