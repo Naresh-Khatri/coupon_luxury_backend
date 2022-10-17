@@ -107,9 +107,12 @@ export async function getCategoryWithName(req, res) {
 }
 export async function getCategoryWithSlug(req, res) {
   try {
-    const category = await prisma.category.findUnique({
+    const category = await prisma.category.findFirst({
       where: {
-        slug: req.params.categorySlug,
+        slug: {
+          contains: req.params.categorySlug,
+          mode: "insensitive",
+        },
       },
       include: {
         offers: {

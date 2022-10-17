@@ -168,7 +168,10 @@ export async function getStoreWithSlug(req, res) {
     // do a case insensitive search
     const store = await prisma.store.findFirst({
       where: {
-        slug: req.params.storeSlug,
+        slug: {
+          contains: req.params.storeSlug,
+          mode: "insensitive",
+        },
       },
       include: {
         category: {
