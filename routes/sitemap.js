@@ -10,6 +10,8 @@ const Router = express.Router();
 let sitemap;
 
 Router.get("/", async (req, res) => {
+  res.header("Content-Type", "application/xml");
+  res.header("Content-Encoding", "gzip");
   const promises = [
     getSlugs("stores"),
     getSlugs("offers"),
@@ -25,23 +27,50 @@ Router.get("/", async (req, res) => {
         changefreq: "monthly",
         priority: 1,
       },
+      {
+        url: "https://www.couponluxury.com/stores",
+        changefreq: "monthly",
+        priority: 0.8,
+      },
+      {
+        url: "https://www.couponluxury.com/blogs",
+        changefreq: "monthly",
+        priority: 0.8,
+      },
+      {
+        url: "https://www.couponluxury.com/about",
+        changefreq: "yearly",
+        priority: 0.8,
+      },
+      {
+        url: "https://www.couponluxury.com/contact",
+        changefreq: "yearly",
+        priority: 0.8,
+      },
+      {
+        url: "https://www.couponluxury.com/privacy-policy",
+        changefreq: "yearly",
+        priority: 0.8,
+      },
     ],
     result.map((type) => type.value)
   );
-  res.header("Content-Type", "application/xml");
-  res.header("Content-Encoding", "gzip");
   // if we have a cached entry send it
   if (sitemap) {
     res.send(sitemap);
     return;
   }
+  // console.log(sitemapURLs)
   try {
-    const smStream = new SitemapStream();
+    const smStream = new SitemapStream({
+      hostname: "https://couponluxury.com/",
+    });
     const pipeline = smStream.pipe(createGzip());
-    // pipe your entries or directly write them.
 
+    // pipe your entries or directly write them.
     sitemapURLs.forEach((link) => {
-      smStream.write(link);
+      //sometimes link doesnt contain url prop idkw
+      if (link?.url) smStream.write(link);
     });
     // cache the response
     streamToPromise(pipeline).then((sm) => (sitemap = sm));
