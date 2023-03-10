@@ -99,6 +99,7 @@ const getSlugs = async (type) => {
       const offers = await prisma.offer.findMany({
         where: {
           active: true,
+          offerType: 'deal'
         },
         orderBy: {
           title: "asc",
