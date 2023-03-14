@@ -1,8 +1,9 @@
 import ImageKit from "imagekit";
+import 'dotenv/config'
 
 const imageKit = new ImageKit({
-  publicKey: "public_OHuFh984ue83eD5OPwMZG4WEBr8=",
-  privateKey: "private_FucxFKOEAQI4yzAcpYCvKWSRnFU=",
+  publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
+  privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
   urlEndpoint: "https://ik.imagekit.io/couponluxury",
 });
 
