@@ -4,6 +4,7 @@ import { removeImgFromImageKit } from "../config/imagekitConfig.js";
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 import serializer from "../utils/serializer.js";
+import { account, client } from "../config/appwrite.js";
 
 export async function getPublicBlogs(req, res) {
   try {
@@ -20,7 +21,6 @@ export async function getPublicBlogs(req, res) {
     console.log(err);
   }
 }
-
 export async function getAllBlogs(req, res) {
   try {
     const allBlogs = await prisma.blog.findMany({
@@ -33,10 +33,8 @@ export async function getAllBlogs(req, res) {
     console.log(err);
   }
 }
-
 export async function getBlog(req, res) {
   try {
-    // console.log(req.params.blogId);
     const blog = await prisma.blog.findUnique({
       where: {
         id: parseInt(req.params.blogId),
@@ -113,6 +111,64 @@ export async function createBlog(req, res) {
         },
       });
     }
+    res.json(newBlog);
+  } catch (err) {
+    console.log(err);
+    if (err.code === "P2002")
+      res.status(400).json({ err: "slug already exists", code: err.code });
+    else res.status(400).send("Invalid Request");
+  }
+}
+
+export async function createBlogV2(req, res) {
+  try {
+    console.log(req.body);
+    client.setJWT(req.headers.authorization.split(" ")[1]);
+    const user = await account.get();
+    console.log(user);
+    console.log(req.files);
+
+    // return res.send("ok");
+    //check if present already
+    const blogExist = await prisma.blog.findUnique({
+      select: {
+        slug: true,
+      },
+      where: {
+        slug: req.body.slug,
+      },
+    });
+    if (blogExist) {
+      return res.status(409).json({
+        message: "blog already exists",
+      });
+    }
+
+    //upload coverImg and thumbnailImg to imageKit
+    const promises = [
+      imageKit.upload({
+        file: req.files.coverImg.data,
+        fileName: req.body.slug,
+      }),
+      imageKit.upload({
+        file: req.files.thumbnailImg.data,
+        fileName: req.body.slug,
+      }),
+    ];
+    const results = await Promise.all(promises);
+    // console.log(results);
+    //create new blog
+    const data = serializer({
+      ...req.body,
+      uid: "editor: " + user.$id,
+      coverImg: results[0].url,
+      thumbnailImg: results[1].url,
+      featured: true,
+      active: true,
+    });
+    const newBlog = await prisma.blog.create({
+      data,
+    });
     res.json(newBlog);
   } catch (err) {
     console.log(err);
