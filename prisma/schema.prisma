@@ -58,7 +58,7 @@ model Store {
   metaTitle       String?
   metaDescription String?
   metaKeywords    String?
-  // metaSchema      String?
+  metaSchema      String?
 }
 
 model Offer {
