@@ -107,7 +107,6 @@ export async function getOffer(req, res) {
 }
 export async function getOfferWithSlug(req, res) {
   try {
-    console.log(req.params.offerSlug);
     const offer = await prisma.offer.findFirst({
       where: {
         slug: req.params.offerSlug.toLowerCase(),
@@ -130,6 +129,9 @@ export async function getOfferWithSlug(req, res) {
         },
       },
     });
+    
+    // console.log(offer)
+
     res.send(offer);
   } catch (err) {
     console.log(err);
