@@ -49,7 +49,10 @@ export async function getBlogWithSlug(req, res) {
   try {
     const blog = await prisma.blog.findFirst({
       where: {
-        slug: req.params.blogSlug.toLowerCase(),
+        slug: {
+          contains: req.params.blogSlug,
+          mode: "insensitive",
+        },
       },
     });
     res.send(blog);
