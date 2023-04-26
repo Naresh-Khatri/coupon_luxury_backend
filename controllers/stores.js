@@ -7,7 +7,6 @@ import serializer from "../utils/serializer.js";
 
 export async function createStore(req, res) {
   try {
-    console.log(req.body);
     //check if title already exists
     const storeExists = await prisma.store.findUnique({
       where: {
@@ -29,7 +28,6 @@ export async function createStore(req, res) {
         },
       ],
     });
-    console.log(result);
     //TODO: are category and subCategory required?
     const data = serializer({
       ...req.body,
@@ -198,7 +196,6 @@ export async function getStoreWithSlug(req, res) {
         },
       },
     });
-    console.log(store)
     res.send(store);
   } catch (err) {
     console.log(err);
@@ -265,7 +262,6 @@ export async function getPublicStores(req, res) {
     if (req.query.category) query.category = req.query.category;
     if (req.query.offerType) query.offerType = req.query.offerType;
     // if (req.query.limit) query.limit = req.query.limit;
-    console.log(query);
     const stores = await prisma.store.findMany({
       where: query,
       take: parseInt(query.limit) || 50,
@@ -301,7 +297,6 @@ export async function getPublicStores(req, res) {
 export async function deleteStore(req, res) {
   //TODO: add a logic to remove stores image too
   try {
-    console.log(req.body);
     const deletedStore = await prisma.store.delete({
       where: {
         id: parseInt(req.params.storeId),
