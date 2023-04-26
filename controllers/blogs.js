@@ -63,7 +63,6 @@ export async function getBlogWithSlug(req, res) {
 
 export async function createBlog(req, res) {
   try {
-    console.log(req.body);
     //check if present already
     const blogExist = await prisma.blog.findUnique({
       where: {
@@ -88,7 +87,6 @@ export async function createBlog(req, res) {
       }),
     ];
     const results = await Promise.all(promises);
-    // console.log(results);
     //create new blog
     const data = serializer({
       ...req.body,
@@ -125,13 +123,9 @@ export async function createBlog(req, res) {
 
 export async function createBlogV2(req, res) {
   try {
-    console.log(req.body);
     client.setJWT(req.headers.authorization.split(" ")[1]);
     const user = await account.get();
-    console.log(user);
-    console.log(req.files);
 
-    // return res.send("ok");
     //check if present already
     const blogExist = await prisma.blog.findUnique({
       select: {
@@ -159,7 +153,6 @@ export async function createBlogV2(req, res) {
       }),
     ];
     const results = await Promise.all(promises);
-    // console.log(results);
     //create new blog
     const data = serializer({
       ...req.body,
@@ -176,14 +169,13 @@ export async function createBlogV2(req, res) {
   } catch (err) {
     console.log(err);
     if (err.code === "P2002")
-      res.status(400).json({ err: "slug already exists", code: err.code });
+      res.status(409).json({ err: "slug already exists", code: err.code });
     else res.status(400).send("Invalid Request");
   }
 }
 
 export async function updateBlog(req, res) {
   try {
-    console.log(req.params.blogId, req.body, req.files);
     //check if image is provided
     if (req.files && req.files.coverImg) {
       //upload coverImg and thumbnailImg to imageKit
