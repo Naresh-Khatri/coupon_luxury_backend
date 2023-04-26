@@ -107,7 +107,6 @@ export async function getCategoryWithName(req, res) {
 }
 export async function getCategoryWithSlug(req, res) {
   try {
-    console.log(req.params);
     const category = await prisma.category.findFirst({
       where: {
         slug: req.params.categorySlug.toLowerCase(),
