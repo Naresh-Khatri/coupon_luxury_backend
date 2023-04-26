@@ -1,11 +1,12 @@
-import blogModel from "../models/BlogModel.js";
-import storeModel from "../models/storeModel.js";
 
 import imageKit from "../config/imagekitConfig.js";
 import { removeImgFromImageKit } from "../config/imagekitConfig.js";
 
+//TODO: use removeImgFromImageKit to delete image from imagekit
+
 export async function newUpload(req, res) {
   try {
+    console.log(req.body);
     const result = await imageKit.upload({
       file: req.files.coverImg.data,
       fileName: "test",
