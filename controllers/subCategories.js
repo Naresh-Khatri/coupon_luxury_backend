@@ -1,7 +1,3 @@
-import streamifier from "streamifier";
-import categoryModel from "../models/categoryModel.js";
-import subCategoryModel from "../models/subCategoryModel.js";
-
 import serializer from "../utils/serializer.js";
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
